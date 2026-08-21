@@ -1,0 +1,229 @@
+/*
+ * Fits the GrapesJS editor into a Vaadin/Aura application and re-skins
+ * GrapesJS's own default chrome with Vaadin 25's design tokens (--vaadin-*,
+ * --aura-*). Only selectors scoped under .grapesjs-editor are touched.
+ *
+ * Requires Aura: add `@StyleSheet(Aura.STYLESHEET)` to your
+ * AppShellConfigurator, since some tokens used below are Aura-only.
+ */
+
+.grapesjs-editor {
+    display: flex;
+    border: 1px solid var(--vaadin-border-color);
+    border-radius: var(--vaadin-radius-l);
+
+    &::part(label) {
+        flex-shrink: 0;
+    }
+
+    &::part(input-fields) {
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+    }
+}
+
+.grapesjs-editor.no-border {
+    border: none;
+}
+
+.gjs-vaadin-root {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    width: 100%;
+    min-height: 0;
+    font-family: var(--aura-font-family);
+    font-size: var(--aura-font-size-s);
+    color: var(--vaadin-text-color);
+    background: var(--vaadin-background-color);
+
+    --gjs-left-width: 0px;
+    --gjs-canvas-top: 0px;
+}
+
+.gjs-vaadin-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    flex-shrink: 0;
+    padding: var(--vaadin-padding-xs) var(--vaadin-padding-s);
+    gap: var(--vaadin-gap-m);
+    background: var(--vaadin-background-container);
+    border-bottom: 1px solid var(--vaadin-border-color-secondary);
+}
+
+.gjs-vaadin-topbar-actions,
+.gjs-vaadin-topbar-devices {
+    display: flex;
+    gap: var(--vaadin-gap-xs);
+}
+
+.gjs-vaadin-topbar-actions,
+.gjs-vaadin-topbar-devices {
+    & .gjs-pn-panel {
+        position: static;
+        display: inline-flex;
+        align-items: center;
+        padding: 0;
+        z-index: auto;
+    }
+
+    & .gjs-pn-panel + .gjs-pn-panel {
+        margin-left: var(--vaadin-gap-s);
+    }
+
+    & .gjs-pn-btn {
+        appearance: none;
+        box-sizing: border-box;
+        min-height: 0;
+        min-width: 0;
+        margin-right: 0;
+        border: 1px solid var(--vaadin-border-color);
+        background: var(--vaadin-background-color);
+        color: var(--vaadin-text-color);
+        border-radius: var(--vaadin-radius-m);
+        padding: var(--vaadin-padding-xs) var(--vaadin-padding-s);
+        font-size: var(--aura-font-size-s);
+        line-height: 1;
+    }
+
+    & .gjs-pn-btn + .gjs-pn-btn {
+        margin-left: var(--vaadin-gap-xs);
+    }
+
+    & .gjs-pn-btn:hover {
+        background: var(--vaadin-background-container-strong);
+    }
+
+    & .gjs-pn-btn.gjs-pn-active,
+    & .gjs-pn-btn:active {
+        background: var(--vaadin-background-container-strong);
+        border-color: var(--vaadin-border-color);
+    }
+
+    & .gjs-devices-c {
+        display: flex;
+        align-items: center;
+        gap: var(--vaadin-gap-xs);
+    }
+
+    & .gjs-device-label {
+        color: var(--vaadin-text-color-secondary);
+    }
+
+    & .gjs-field.gjs-select {
+        border: 1px solid var(--vaadin-border-color);
+        border-radius: var(--vaadin-radius-m);
+        background: var(--vaadin-background-color);
+    }
+
+    & .gjs-devices {
+        font-size: var(--aura-font-size-s);
+        color: var(--vaadin-text-color);
+        background: transparent;
+        border: none;
+        padding: var(--vaadin-padding-xs) var(--vaadin-padding-s);
+    }
+}
+
+.gjs-vaadin-body {
+    display: flex;
+    flex-grow: 1;
+    min-height: 0;
+}
+
+.gjs-vaadin-blocks {
+    width: 220px;
+    flex-shrink: 0;
+    overflow-y: auto;
+    border-right: 1px solid var(--vaadin-border-color-secondary);
+    background: var(--vaadin-background-color);
+}
+
+.gjs-vaadin-canvas {
+    flex-grow: 1;
+    min-width: 0;
+    background: var(--vaadin-background-container);
+}
+
+.gjs-vaadin-right {
+    width: 280px;
+    flex-shrink: 0;
+    overflow-y: auto;
+    border-left: 1px solid var(--vaadin-border-color-secondary);
+    background: var(--vaadin-background-color);
+    display: flex;
+    flex-direction: column;
+}
+
+.gjs-vaadin-layers {
+    flex-shrink: 0;
+    max-height: 35%;
+    overflow-y: auto;
+    border-bottom: 1px solid var(--vaadin-border-color-secondary);
+}
+
+.gjs-vaadin-selectors {
+    flex-shrink: 0;
+    border-bottom: 1px solid var(--vaadin-border-color-secondary);
+}
+
+.gjs-vaadin-styles {
+    flex-grow: 1;
+    overflow-y: auto;
+    border-bottom: 1px solid var(--vaadin-border-color-secondary);
+}
+
+.gjs-vaadin-traits {
+    flex-shrink: 0;
+    max-height: 30%;
+    overflow-y: auto;
+}
+
+.gjs-vaadin-readonly .gjs-vaadin-blocks,
+.gjs-vaadin-readonly .gjs-vaadin-right {
+    pointer-events: none;
+    opacity: 0.6;
+}
+
+/* --- Re-skin GrapesJS's own default chrome with Vaadin/Aura tokens ----- */
+
+.gjs-vaadin-root .gjs-one-bg {
+    background-color: var(--vaadin-background-color);
+}
+
+.gjs-vaadin-root .gjs-two-color {
+    color: var(--vaadin-text-color);
+}
+
+.gjs-vaadin-root .gjs-three-bg {
+    background-color: var(--vaadin-background-container);
+    color: var(--vaadin-text-color);
+}
+
+.gjs-vaadin-root .gjs-four-color,
+.gjs-vaadin-root .gjs-four-color-h:hover {
+    color: var(--aura-accent-color);
+}
+
+.gjs-vaadin-root .gjs-block {
+    background: var(--vaadin-background-container);
+    border: 1px solid var(--vaadin-border-color-secondary);
+    color: var(--vaadin-text-color);
+    border-radius: var(--vaadin-radius-m);
+}
+
+.gjs-vaadin-root .gjs-block:hover {
+    background: var(--vaadin-background-container-strong);
+}
+
+.gjs-vaadin-root .gjs-sm-sector-title,
+.gjs-vaadin-root .gjs-layer-title {
+    color: var(--vaadin-text-color-secondary);
+}
+
+[theme~="dark"] .gjs-vaadin-root {
+    color-scheme: dark;
+}

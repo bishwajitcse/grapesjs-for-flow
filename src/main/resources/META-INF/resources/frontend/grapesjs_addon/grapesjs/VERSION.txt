@@ -1,0 +1,9 @@
+Vendored from the official npm package "grapesjs", version 0.23.5.
+Source: https://www.npmjs.com/package/grapesjs
+Files: dist/grapes.min.js (UMD build, sets window.grapesjs), dist/css/grapes.min.css.
+License: BSD-3-Clause (see LICENSE in this directory).
+
+To upgrade: download the new version's tarball (npm pack grapesjs@<version>),
+replace grapes.min.js and grapes.min.css here, and update this file and the
+@JavaScript/@StyleSheet-adjacent injectEditorScript() version reference in
+GrapesJsEditor.java if the path changes.
