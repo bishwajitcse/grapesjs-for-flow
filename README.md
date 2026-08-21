@@ -26,9 +26,9 @@ A [Vaadin Flow](https://vaadin.com/flow) component embedding the [GrapesJS](http
 
 ## Requirements
 
-- Java 25 (the project's `maven.compiler.source`/`target`; the Vaadin build tooling itself requires at least Java 21)
-- Vaadin Flow 25.x
-- The [Aura](https://vaadin.com/docs/latest/styling/aura) theme active in your application (see [Theming](#theming) — Aura is opt-in in Vaadin 25, and the editor's own styling depends on it)
+- Java 17+ (the project's `maven.compiler.source`/`target`)
+- Vaadin Flow 24.x
+- The default Lumo theme active in your application (see [Theming](#theming) — the editor's own styling depends on Lumo's design tokens)
 
 ## Adding this addon to your project
 
@@ -50,7 +50,7 @@ Then, in your own Vaadin project's `pom.xml`:
 </dependency>
 ```
 
-The addon depends on `vaadin-core` with `provided` scope, so it uses whatever Vaadin version your own project already supplies (must be 25.x). No other runtime dependencies are pulled in — GrapesJS itself is vendored inside the addon's jar, not fetched separately.
+The addon depends on `vaadin-core` with `provided` scope, so it uses whatever Vaadin version your own project already supplies (must be 24.x). No other runtime dependencies are pulled in — GrapesJS itself is vendored inside the addon's jar, not fetched separately.
 
 If you later publish this to Maven Central, GitHub Packages, or another repository, the same coordinates apply — just add the appropriate `<repository>` entry.
 
@@ -65,8 +65,6 @@ editor.setValue("<h1>Hello, world!</h1>");
 add(editor);
 ```
 
-Remember to add `@StyleSheet(Aura.STYLESHEET)` to your application's `AppShellConfigurator` — see [Theming](#theming).
-
 ## Features
 
 - **HTML field** — `GrapesJsEditor` is a `CustomField<String>`; works with `Binder`, `addValueChangeListener`, `setReadOnly`, etc.
@@ -80,7 +78,7 @@ Remember to add `@StyleSheet(Aura.STYLESHEET)` to your application's `AppShellCo
 - **Enabled vs. read-only** — gray out the whole component, or keep it interactive while only locking canvas editing.
 - **Theme variant** — `NO_BORDER` to drop the default border/box-shadow when your layout already provides one.
 - **Raw configuration escape hatches** — `configure(key, value)` for simple GrapesJS init options, `setConfig(json)` for anything more complex.
-- **Vaadin 25 / Aura-native chrome** — the editor's own panel layout (toolbar, blocks, layers, style manager, traits) is rebuilt with Vaadin's design tokens instead of GrapesJS's default skin, so it looks native inside a Vaadin application rather than like an embedded third-party widget.
+- **Lumo-native chrome** — the editor's own panel layout (toolbar, blocks, layers, style manager, traits) is rebuilt with Vaadin's Lumo design tokens instead of GrapesJS's default skin, so it looks native inside a Vaadin application rather than like an embedded third-party widget.
 
 ## Content: HTML, CSS, and project data
 
@@ -174,20 +172,7 @@ editor.setReadOnly(true);   // keeps it interactive, but the canvas can't be edi
 
 ## Theming
 
-The editor's chrome is styled with Vaadin 25's theme-agnostic design tokens (`--vaadin-*`), plus a handful of Aura-only tokens (`--aura-*`) for things Vaadin doesn't standardize, such as font family/size and accent color.
-
-Aura is opt-in in Vaadin 25 — add it to your application's `AppShellConfigurator`:
-
-```java
-import com.vaadin.flow.component.dependency.StyleSheet;
-import com.vaadin.flow.theme.aura.Aura;
-
-@StyleSheet(Aura.STYLESHEET)
-public class Application implements AppShellConfigurator {
-}
-```
-
-Without this, the editor still functions, but its spacing, radii and colors fall back to unstyled defaults, since several of the tokens it uses are only defined by Aura, not by Lumo.
+The editor's chrome is styled with Vaadin's Lumo design tokens (`--lumo-*`), which are available by default in any Vaadin application — no extra theme setup is required.
 
 Use `GrapesJsEditorVariant.NO_BORDER` to drop the default border/box-shadow when your surrounding layout already provides one:
 

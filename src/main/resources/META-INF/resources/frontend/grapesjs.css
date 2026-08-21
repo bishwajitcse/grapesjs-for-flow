@@ -1,16 +1,13 @@
 /*
- * Fits the GrapesJS editor into a Vaadin/Aura application and re-skins
- * GrapesJS's own default chrome with Vaadin 25's design tokens (--vaadin-*,
- * --aura-*). Only selectors scoped under .grapesjs-editor are touched.
- *
- * Requires Aura: add `@StyleSheet(Aura.STYLESHEET)` to your
- * AppShellConfigurator, since some tokens used below are Aura-only.
+ * Fits the GrapesJS editor into a Vaadin application and re-skins
+ * GrapesJS's own default chrome with Vaadin's Lumo theme tokens
+ * (--lumo-*). Only selectors scoped under .grapesjs-editor are touched.
  */
 
 .grapesjs-editor {
     display: flex;
-    border: 1px solid var(--vaadin-border-color);
-    border-radius: var(--vaadin-radius-l);
+    border: 1px solid var(--lumo-contrast-20pct);
+    border-radius: var(--lumo-border-radius-l);
 
     &::part(label) {
         flex-shrink: 0;
@@ -34,10 +31,10 @@
     height: 100%;
     width: 100%;
     min-height: 0;
-    font-family: var(--aura-font-family);
-    font-size: var(--aura-font-size-s);
-    color: var(--vaadin-text-color);
-    background: var(--vaadin-background-color);
+    font-family: var(--lumo-font-family);
+    font-size: var(--lumo-font-size-s);
+    color: var(--lumo-body-text-color);
+    background: var(--lumo-base-color);
 
     --gjs-left-width: 0px;
     --gjs-canvas-top: 0px;
@@ -48,16 +45,16 @@
     align-items: center;
     justify-content: flex-start;
     flex-shrink: 0;
-    padding: var(--vaadin-padding-xs) var(--vaadin-padding-s);
-    gap: var(--vaadin-gap-m);
-    background: var(--vaadin-background-container);
-    border-bottom: 1px solid var(--vaadin-border-color-secondary);
+    padding: var(--lumo-space-xs) var(--lumo-space-s);
+    gap: var(--lumo-space-m);
+    background: var(--lumo-contrast-5pct);
+    border-bottom: 1px solid var(--lumo-contrast-10pct);
 }
 
 .gjs-vaadin-topbar-actions,
 .gjs-vaadin-topbar-devices {
     display: flex;
-    gap: var(--vaadin-gap-xs);
+    gap: var(--lumo-space-xs);
 }
 
 .gjs-vaadin-topbar-actions,
@@ -71,7 +68,7 @@
     }
 
     & .gjs-pn-panel + .gjs-pn-panel {
-        margin-left: var(--vaadin-gap-s);
+        margin-left: var(--lumo-space-s);
     }
 
     & .gjs-pn-btn {
@@ -80,51 +77,51 @@
         min-height: 0;
         min-width: 0;
         margin-right: 0;
-        border: 1px solid var(--vaadin-border-color);
-        background: var(--vaadin-background-color);
-        color: var(--vaadin-text-color);
-        border-radius: var(--vaadin-radius-m);
-        padding: var(--vaadin-padding-xs) var(--vaadin-padding-s);
-        font-size: var(--aura-font-size-s);
+        border: 1px solid var(--lumo-contrast-20pct);
+        background: var(--lumo-base-color);
+        color: var(--lumo-body-text-color);
+        border-radius: var(--lumo-border-radius-m);
+        padding: var(--lumo-space-xs) var(--lumo-space-s);
+        font-size: var(--lumo-font-size-s);
         line-height: 1;
     }
 
     & .gjs-pn-btn + .gjs-pn-btn {
-        margin-left: var(--vaadin-gap-xs);
+        margin-left: var(--lumo-space-xs);
     }
 
     & .gjs-pn-btn:hover {
-        background: var(--vaadin-background-container-strong);
+        background: var(--lumo-contrast-10pct);
     }
 
     & .gjs-pn-btn.gjs-pn-active,
     & .gjs-pn-btn:active {
-        background: var(--vaadin-background-container-strong);
-        border-color: var(--vaadin-border-color);
+        background: var(--lumo-contrast-10pct);
+        border-color: var(--lumo-contrast-20pct);
     }
 
     & .gjs-devices-c {
         display: flex;
         align-items: center;
-        gap: var(--vaadin-gap-xs);
+        gap: var(--lumo-space-xs);
     }
 
     & .gjs-device-label {
-        color: var(--vaadin-text-color-secondary);
+        color: var(--lumo-secondary-text-color);
     }
 
     & .gjs-field.gjs-select {
-        border: 1px solid var(--vaadin-border-color);
-        border-radius: var(--vaadin-radius-m);
-        background: var(--vaadin-background-color);
+        border: 1px solid var(--lumo-contrast-20pct);
+        border-radius: var(--lumo-border-radius-m);
+        background: var(--lumo-base-color);
     }
 
     & .gjs-devices {
-        font-size: var(--aura-font-size-s);
-        color: var(--vaadin-text-color);
+        font-size: var(--lumo-font-size-s);
+        color: var(--lumo-body-text-color);
         background: transparent;
         border: none;
-        padding: var(--vaadin-padding-xs) var(--vaadin-padding-s);
+        padding: var(--lumo-space-xs) var(--lumo-space-s);
     }
 }
 
@@ -138,22 +135,22 @@
     width: 220px;
     flex-shrink: 0;
     overflow-y: auto;
-    border-right: 1px solid var(--vaadin-border-color-secondary);
-    background: var(--vaadin-background-color);
+    border-right: 1px solid var(--lumo-contrast-10pct);
+    background: var(--lumo-base-color);
 }
 
 .gjs-vaadin-canvas {
     flex-grow: 1;
     min-width: 0;
-    background: var(--vaadin-background-container);
+    background: var(--lumo-contrast-5pct);
 }
 
 .gjs-vaadin-right {
     width: 280px;
     flex-shrink: 0;
     overflow-y: auto;
-    border-left: 1px solid var(--vaadin-border-color-secondary);
-    background: var(--vaadin-background-color);
+    border-left: 1px solid var(--lumo-contrast-10pct);
+    background: var(--lumo-base-color);
     display: flex;
     flex-direction: column;
 }
@@ -162,18 +159,18 @@
     flex-shrink: 0;
     max-height: 35%;
     overflow-y: auto;
-    border-bottom: 1px solid var(--vaadin-border-color-secondary);
+    border-bottom: 1px solid var(--lumo-contrast-10pct);
 }
 
 .gjs-vaadin-selectors {
     flex-shrink: 0;
-    border-bottom: 1px solid var(--vaadin-border-color-secondary);
+    border-bottom: 1px solid var(--lumo-contrast-10pct);
 }
 
 .gjs-vaadin-styles {
     flex-grow: 1;
     overflow-y: auto;
-    border-bottom: 1px solid var(--vaadin-border-color-secondary);
+    border-bottom: 1px solid var(--lumo-contrast-10pct);
 }
 
 .gjs-vaadin-traits {
@@ -191,37 +188,37 @@
 /* --- Re-skin GrapesJS's own default chrome with Vaadin/Aura tokens ----- */
 
 .gjs-vaadin-root .gjs-one-bg {
-    background-color: var(--vaadin-background-color);
+    background-color: var(--lumo-base-color);
 }
 
 .gjs-vaadin-root .gjs-two-color {
-    color: var(--vaadin-text-color);
+    color: var(--lumo-body-text-color);
 }
 
 .gjs-vaadin-root .gjs-three-bg {
-    background-color: var(--vaadin-background-container);
-    color: var(--vaadin-text-color);
+    background-color: var(--lumo-contrast-5pct);
+    color: var(--lumo-body-text-color);
 }
 
 .gjs-vaadin-root .gjs-four-color,
 .gjs-vaadin-root .gjs-four-color-h:hover {
-    color: var(--aura-accent-color);
+    color: var(--lumo-primary-color);
 }
 
 .gjs-vaadin-root .gjs-block {
-    background: var(--vaadin-background-container);
-    border: 1px solid var(--vaadin-border-color-secondary);
-    color: var(--vaadin-text-color);
-    border-radius: var(--vaadin-radius-m);
+    background: var(--lumo-contrast-5pct);
+    border: 1px solid var(--lumo-contrast-10pct);
+    color: var(--lumo-body-text-color);
+    border-radius: var(--lumo-border-radius-m);
 }
 
 .gjs-vaadin-root .gjs-block:hover {
-    background: var(--vaadin-background-container-strong);
+    background: var(--lumo-contrast-10pct);
 }
 
 .gjs-vaadin-root .gjs-sm-sector-title,
 .gjs-vaadin-root .gjs-layer-title {
-    color: var(--vaadin-text-color-secondary);
+    color: var(--lumo-secondary-text-color);
 }
 
 [theme~="dark"] .gjs-vaadin-root {

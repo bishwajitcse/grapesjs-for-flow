@@ -14,7 +14,6 @@ import com.vaadin.flow.component.BlurNotifier.BlurEvent;
 import com.vaadin.flow.component.ComponentEventListener;
 import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.FocusNotifier.FocusEvent;
-import com.vaadin.flow.component.FocusOption;
 import com.vaadin.flow.component.HasSize;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.customfield.CustomField;
@@ -42,13 +41,8 @@ import com.vaadin.flow.shared.Registration;
  * different purposes and none of them should be reconstructed from another.
  * <p>
  * <b>Theming:</b> the component's own chrome ({@code grapesjs.css}) is
- * styled with Vaadin 25's theme-agnostic design tokens ({@code --vaadin-*})
- * plus a few Aura-only tokens ({@code --aura-*}) for things Vaadin doesn't
- * standardize (font family/size, accent color). Aura is opt-in in Vaadin 25,
- * so the consuming application must add
- * {@code @StyleSheet(Aura.STYLESHEET)} to its {@code AppShellConfigurator}
- * &mdash; without it, the editor's spacing, radii and colors fall back to
- * unstyled defaults.
+ * styled with Vaadin's Lumo theme design tokens ({@code --lumo-*}), which
+ * are available by default in any Vaadin application.
  * <p>
  * <b>Security:</b> GrapesJS produces HTML/CSS that end users can freely
  * shape, including arbitrary attributes and (depending on configuration)
@@ -77,7 +71,7 @@ public class GrapesJsEditor extends CustomField<String> implements HasSize, HasT
     private String currentValue = "";
     private String currentCss = "";
     private String rawConfig;
-    private final Map<String, Object> config = new LinkedHashMap<>();
+    private final LinkedHashMap<String, Object> config = new LinkedHashMap<>();
 
     private int debounceTimeout = 0;
     private ValueChangeMode valueChangeMode = ValueChangeMode.CHANGE;
@@ -100,7 +94,7 @@ public class GrapesJsEditor extends CustomField<String> implements HasSize, HasT
         getElement().appendChild(editorContainer);
 
         changeListenerRegistration = getElement().addEventListener("gjs-change", event -> {
-            if (!event.getEventData().has("event.htmlString")) {
+            if (!event.getEventData().hasKey("event.htmlString")) {
                 return;
             }
             String htmlString = event.getEventData().get("event.htmlString").asString();
@@ -195,13 +189,68 @@ public class GrapesJsEditor extends CustomField<String> implements HasSize, HasT
     private void initConnector() {
         runBeforeClientResponse(ui -> {
             String rawConfigJs = rawConfig != null ? rawConfig : "{}";
+            String optionsJs = toJson(config);
             ui.getPage().executeJs(
                     "const rawconfig = " + rawConfigJs + ";\n"
-                            + "window.Vaadin.Flow.grapesjsConnector.initLazy(rawconfig, $0, $1, $2, $3, $4, $5)",
-                    getElement(), editorContainer, config, currentValue, currentCss, (enabled && !readOnly))
+                            + "const options = " + optionsJs + ";\n"
+                            + "window.Vaadin.Flow.grapesjsConnector.initLazy(rawconfig, $0, $1, options, $2, $3, $4)",
+                    getElement(), editorContainer, currentValue, currentCss, (enabled && !readOnly))
                     .then(ignore -> initialContentSent = true);
             connectorInitialized = true;
         });
+    }
+
+    /**
+     * Serializes a flat map of JSON-primitive values ({@link String},
+     * {@link Boolean}, {@link Number}) to a JSON object literal, for
+     * splicing directly into JavaScript evaluated via {@link
+     * com.vaadin.flow.component.page.Page#executeJs}. This is used instead
+     * of passing the map itself as an {@code executeJs} argument, since
+     * Flow's JSON codec does not support encoding arbitrary {@link Map}
+     * arguments.
+     */
+    private static String toJson(Map<String, ?> map) {
+        StringBuilder json = new StringBuilder("{");
+        boolean first = true;
+        for (Map.Entry<String, ?> entry : map.entrySet()) {
+            if (!first) {
+                json.append(',');
+            }
+            first = false;
+            json.append(jsonString(entry.getKey())).append(':').append(jsonValue(entry.getValue()));
+        }
+        return json.append('}').toString();
+    }
+
+    private static String jsonValue(Object value) {
+        if (value instanceof String string) {
+            return jsonString(string);
+        } else if (value instanceof Boolean || value instanceof Number) {
+            return String.valueOf(value);
+        }
+        return "null";
+    }
+
+    private static String jsonString(String value) {
+        StringBuilder json = new StringBuilder("\"");
+        for (int i = 0; i < value.length(); i++) {
+            char c = value.charAt(i);
+            switch (c) {
+                case '"' -> json.append("\\\"");
+                case '\\' -> json.append("\\\\");
+                case '\n' -> json.append("\\n");
+                case '\r' -> json.append("\\r");
+                case '\t' -> json.append("\\t");
+                default -> {
+                    if (c < 0x20) {
+                        json.append(String.format("\\u%04x", (int) c));
+                    } else {
+                        json.append(c);
+                    }
+                }
+            }
+        }
+        return json.append('"').toString();
     }
 
     private void saveOnClose() {
@@ -476,7 +525,7 @@ public class GrapesJsEditor extends CustomField<String> implements HasSize, HasT
     // ------------------------------------------------------------------
 
     @Override
-    public void focus(FocusOption... options) {
+    public void focus() {
         runBeforeClientResponse(ui -> getElement().executeJs("""
                 const el = this;
                 if (el.$connector && el.$connector.isInDialog()) {

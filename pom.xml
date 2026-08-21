@@ -9,11 +9,12 @@
     <description>Integration of the GrapesJS visual web editor for Vaadin Flow</description>
 
     <properties>
-        <maven.compiler.source>25</maven.compiler.source>
-        <maven.compiler.target>25</maven.compiler.target>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <vaadin.version>25.2.6</vaadin.version>
+        <java.version>17</java.version>
+        <vaadin.version>24.9.5</vaadin.version>
     </properties>
 
     <licenses>
@@ -39,7 +40,7 @@
             <dependency>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-dependencies</artifactId>
-                <version>4.1.0</version>
+                <version>3.5.7</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -72,11 +73,6 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.vaadin</groupId>
-            <artifactId>browserless-test-spring</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>
