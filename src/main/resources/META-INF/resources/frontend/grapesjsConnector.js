@@ -419,8 +419,40 @@ window.Vaadin.Flow.grapesjsConnector = {
         Object.assign(baseConfig, customConfig, options || {});
         baseConfig.container = canvasEl;
 
+        // Properties already surfaced by one of the configured sectors above
+        // (or by the host app's own customConfig/options overrides). Any
+        // other inline style property found on a selected element is not
+        // otherwise shown anywhere in the Style Manager, so it's surfaced
+        // dynamically in the "Other styles" sector below.
+        const coveredStyleProps = new Set();
+        ((baseConfig.styleManager && baseConfig.styleManager.sectors) || []).forEach((sector) => {
+            (sector.buildProps || []).forEach((p) => coveredStyleProps.add(p));
+            (sector.properties || []).forEach((p) => coveredStyleProps.add(typeof p === 'string' ? p : p.property));
+        });
+
         const editor = grapesjs.init(baseConfig);
         c.$connector.editor = editor;
+
+        const OTHER_STYLES_SECTOR = 'gjs-vaadin-other-styles';
+        let otherStyleProps = [];
+
+        function refreshOtherStylesSector(component) {
+            const sm = editor.StyleManager;
+            if (!sm.getSector(OTHER_STYLES_SECTOR)) {
+                sm.addSector(OTHER_STYLES_SECTOR, { name: 'Other styles', open: false, properties: [] });
+            }
+            otherStyleProps.forEach((p) => sm.removeProperty(OTHER_STYLES_SECTOR, p));
+            otherStyleProps = [];
+
+            const style = component && component.getStyle ? component.getStyle() : null;
+            Object.keys(style || {}).forEach((prop) => {
+                if (coveredStyleProps.has(prop)) {
+                    return;
+                }
+                sm.addProperty(OTHER_STYLES_SECTOR, { property: prop, type: 'text' });
+                otherStyleProps.push(prop);
+            });
+        }
 
         editor.on('load', () => {
             setTimeout(() => {
@@ -477,6 +509,7 @@ window.Vaadin.Flow.grapesjsConnector = {
         });
 
         editor.on('component:selected', (component) => {
+            refreshOtherStylesSector(component);
             const event = new Event('gjs-select');
             event.componentId = (component && component.getId && component.getId()) || '';
             event.tagName = (component && component.get && component.get('tagName')) || '';
@@ -484,10 +517,17 @@ window.Vaadin.Flow.grapesjsConnector = {
         });
 
         editor.on('component:deselected', () => {
+            refreshOtherStylesSector(null);
             const event = new Event('gjs-select');
             event.componentId = '';
             event.tagName = '';
             c.dispatchEvent(event);
+        });
+
+        editor.on('component:styleUpdate', (component) => {
+            if (editor.getSelected() === component) {
+                refreshOtherStylesSector(component);
+            }
         });
 
         editor.on('load', () => {

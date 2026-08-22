@@ -121,7 +121,7 @@ Built-in presets (see `GrapesJsBlockPresets.knownTypes()`):
 - **Sections** — `navbar`, `hero`, `about`, `services`, `section`, `feature-section`, `pricing`, `testimonials`, `team`, `stats`, `gallery`, `blog-grid`, `cta`, `newsletter`, `contact`, `logos`, `video-section`, `timeline`, `faq`, `footer`
 - **Layout** — `container`, `two-columns`, `three-columns`, `four-columns`
 - **Components** — `card`, `pricing-card`, `testimonial-card`, `icon-box`, `image-text`, `button`, `link`, `badge`, `avatar`, `progress-bar`, `rating`, `social-icons`, `alert`, `quote`, `tabs`, `accordion`, `divider`, `spacer`
-- **Basic** — `text`, `heading`, `image`, `list`, `table`
+- **Basic** — `text`, `heading`, `div`, `image`, `list`, `table`
 - **Forms** — `input`, `textarea`, `select`, `checkbox`
 
 ## Devices

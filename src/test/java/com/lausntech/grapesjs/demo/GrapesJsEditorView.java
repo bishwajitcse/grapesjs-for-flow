@@ -45,7 +45,7 @@ public class GrapesJsEditorView extends VerticalLayout {
 				 "badge",  "progress-bar", "rating", "social-icons", "alert", "quote", "tabs",
 				"accordion", "divider", "spacer"));
 		
-		features.put("Basic", List.of("text", "heading", "image", "list", "table"));
+		features.put("Basic", List.of("text", "heading", "div", "image", "list", "table"));
 		//features.put("Forms", List.of("input", "textarea", "select", "checkbox"));
 		editor.addBlocks(features);
 

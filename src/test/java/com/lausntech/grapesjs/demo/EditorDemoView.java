@@ -41,7 +41,7 @@ public class EditorDemoView extends VerticalLayout {
         features.put("Components", List.of("card", "pricing-card", "testimonial-card", "icon-box", "button", "link",
                 "image-text", "badge", "avatar", "progress-bar", "rating", "social-icons", "alert", "quote", "tabs",
                 "accordion", "divider", "spacer"));
-        features.put("Basic", List.of("text", "heading", "image", "list", "table"));
+        features.put("Basic", List.of("text", "heading", "div", "image", "list", "table"));
         features.put("Forms", List.of("input", "textarea", "select", "checkbox"));
         editor.addBlocks(features);
 

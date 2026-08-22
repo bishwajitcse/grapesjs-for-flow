@@ -35,6 +35,8 @@ public final class GrapesJsBlockPresets {
 
         register("heading", "Heading", "<h2>Heading text</h2>");
 
+        register("div", "Div", "<div style=\"min-height:60px;padding:10px\"></div>");
+
         register("image", "Image",
                 "<img src=\"https://placehold.co/600x400\" style=\"max-width:100%\" alt=\"\" />");
 
