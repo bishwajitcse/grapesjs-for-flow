@@ -1,6 +1,7 @@
 package com.lausntech.grapesjs;
 
 import com.vaadin.flow.component.ComponentEvent;
+import com.vaadin.flow.component.DomEvent;
 
 /**
  * Fired once the underlying GrapesJS editor instance has finished
@@ -8,6 +9,7 @@ import com.vaadin.flow.component.ComponentEvent;
  * {@code load} event. Register with
  * {@link GrapesJsEditor#addReadyListener(com.vaadin.flow.component.ComponentEventListener)}.
  */
+@DomEvent("gjs-ready")
 public class GrapesJsReadyEvent extends ComponentEvent<GrapesJsEditor> {
 
     /**

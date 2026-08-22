@@ -77,6 +77,7 @@ public class GrapesJsEditor extends CustomField<String> implements HasSize, HasT
     private ValueChangeMode valueChangeMode = ValueChangeMode.CHANGE;
     private boolean enabled = true;
     private boolean readOnly = false;
+    private boolean toolbarVisible = true;
 
     /**
      * Creates a new, empty editor. Use {@link #configure(String, boolean)}
@@ -674,6 +675,85 @@ public class GrapesJsEditor extends CustomField<String> implements HasSize, HasT
      */
     public void toggleFullscreen() {
         runBeforeClientResponse(ui -> getElement().callJsFunction("$connector.toggleFullscreen"));
+    }
+
+    // ------------------------------------------------------------------
+    // Toolbar visibility
+    // ------------------------------------------------------------------
+
+    /**
+     * Shows or hides GrapesJS's own internal toolbar entirely &mdash; the
+     * row with its native Undo/Redo, View components, Preview, Fullscreen
+     * and View code buttons, the device selector, and any buttons
+     * registered via {@link #addToolbarButton(String, String)}. Use this
+     * if your application drives these actions from its own UI instead
+     * (e.g. your own Save/Undo/Redo buttons next to the editor) and
+     * doesn't want GrapesJS's built-in chrome duplicating them.
+     *
+     * @param visible {@code false} to hide the internal toolbar
+     */
+    public void setToolbarVisible(boolean visible) {
+        this.toolbarVisible = visible;
+        runBeforeClientResponse(ui -> getElement().callJsFunction("$connector.setToolbarVisible", visible));
+    }
+
+    /**
+     * Returns whether GrapesJS's own internal toolbar is currently visible.
+     *
+     * @return {@code true} if the internal toolbar is visible
+     */
+    public boolean isToolbarVisible() {
+        return toolbarVisible;
+    }
+
+    // ------------------------------------------------------------------
+    // Toolbar buttons
+    // ------------------------------------------------------------------
+
+    /**
+     * Registers a custom button in GrapesJS's own toolbar, next to its
+     * built-in Undo/Redo/Preview/Fullscreen buttons. Clicking it fires a
+     * {@link GrapesJsToolbarButtonClickEvent} on the server; register a
+     * listener with {@link #addToolbarButtonClickListener(ComponentEventListener)}
+     * to run server-side logic (e.g. publish the page, call an API) when
+     * it's clicked.
+     *
+     * @param id unique button id
+     * @param label the label shown on the button; either plain text or a
+     *        small HTML/SVG snippet, the same as GrapesJS's own built-in
+     *        buttons use
+     * @return this instance, for chaining
+     */
+    public GrapesJsEditor addToolbarButton(String id, String label) {
+        Objects.requireNonNull(id, "id");
+        Objects.requireNonNull(label, "label");
+        runBeforeClientResponse(ui -> getElement().callJsFunction("$connector.addToolbarButton", id, label));
+        return this;
+    }
+
+    /**
+     * Removes a custom toolbar button previously registered with
+     * {@link #addToolbarButton(String, String)}.
+     *
+     * @param id the button id
+     */
+    public void removeToolbarButton(String id) {
+        Objects.requireNonNull(id, "id");
+        runBeforeClientResponse(ui -> getElement().callJsFunction("$connector.removeToolbarButton", id));
+    }
+
+    /**
+     * Registers a listener invoked whenever a custom toolbar button
+     * (registered via {@link #addToolbarButton(String, String)}) is
+     * clicked. The event carries the clicked button's id
+     * ({@link GrapesJsToolbarButtonClickEvent#getButtonId()}), so a single
+     * listener can handle multiple buttons.
+     *
+     * @param listener the listener
+     * @return a registration for removing the listener
+     */
+    public Registration addToolbarButtonClickListener(ComponentEventListener<GrapesJsToolbarButtonClickEvent> listener) {
+        return addListener(GrapesJsToolbarButtonClickEvent.class, listener);
     }
 
     // ------------------------------------------------------------------

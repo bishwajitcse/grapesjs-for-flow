@@ -15,6 +15,7 @@ A [Vaadin Flow](https://vaadin.com/flow) component embedding the [GrapesJS](http
 - [Devices](#devices)
 - [Assets](#assets)
 - [Commands](#commands)
+- [Toolbar buttons](#toolbar-buttons)
 - [Events](#events)
 - [Value change behavior](#value-change-behavior)
 - [Enabled vs. read-only](#enabled-vs-read-only)
@@ -70,11 +71,12 @@ add(editor);
 - **HTML field** — `GrapesJsEditor` is a `CustomField<String>`; works with `Binder`, `addValueChangeListener`, `setReadOnly`, etc.
 - **Separate CSS & project data access** — read/write CSS independently of HTML, and save/restore the full GrapesJS project (component tree, styles, pages, symbols) as JSON for later editing.
 - **CSS-inlined HTML export** — `getFullHtml()` returns HTML with all applicable CSS inlined as `style` attributes, for reuse anywhere that only keeps a plain HTML fragment (pasting into another rich text editor such as TinyMCE, email, a CMS field that strips `<style>` tags).
-- **Blocks** — register custom HTML blocks individually, or in bulk from a small built-in preset library (hero sections, columns, cards, buttons, and more) organized by category.
+- **Blocks** — register custom HTML blocks individually, or in bulk from a built-in preset library of 40+ modern-website building blocks (navbar, hero, pricing, testimonials, team, stats, gallery, forms, and more) organized by category.
 - **Devices** — the standard desktop/tablet/mobile breakpoints out of the box, plus custom devices.
 - **Assets** — register images/media for GrapesJS's asset picker.
 - **Commands** — undo/redo, fullscreen, and any GrapesJS command by id (`core:preview`, `core:open-code`, ...).
-- **Events** — ready, value-change (with configurable trigger mode and debounce), component selection, focus/blur.
+- **Toolbar buttons** — register custom buttons in GrapesJS's own toolbar that fire a server-side event when clicked, e.g. to trigger a "Publish" action.
+- **Events** — ready, value-change (with configurable trigger mode and debounce), component selection, focus/blur, custom toolbar button clicks.
 - **Enabled vs. read-only** — gray out the whole component, or keep it interactive while only locking canvas editing.
 - **Theme variant** — `NO_BORDER` to drop the default border/box-shadow when your layout already provides one.
 - **Raw configuration escape hatches** — `configure(key, value)` for simple GrapesJS init options, `setConfig(json)` for anything more complex.
@@ -109,12 +111,18 @@ Use `getProjectData()`/`loadProjectData()` — not hand-assembled HTML/CSS — t
 editor.addBlock("cta", "Call to action", "<a href=\"#\" class=\"cta\">Click me</a>");
 
 editor.addBlocks(Map.of(
-        "Sections", List.of("hero", "feature-section", "section"),
+        "Sections", List.of("navbar", "hero", "feature-section", "pricing", "footer"),
         "Layout", List.of("two-columns", "three-columns", "container"),
         "Basic", List.of("text", "heading", "image", "button", "link")));
 ```
 
-Built-in presets (see `GrapesJsBlockPresets.knownTypes()`): `text`, `heading`, `image`, `button`, `link`, `container`, `section`, `two-columns`, `three-columns`, `hero`, `card`, `image-text`, `feature-section`.
+Built-in presets (see `GrapesJsBlockPresets.knownTypes()`):
+
+- **Sections** — `navbar`, `hero`, `about`, `services`, `section`, `feature-section`, `pricing`, `testimonials`, `team`, `stats`, `gallery`, `blog-grid`, `cta`, `newsletter`, `contact`, `logos`, `video-section`, `timeline`, `faq`, `footer`
+- **Layout** — `container`, `two-columns`, `three-columns`, `four-columns`
+- **Components** — `card`, `pricing-card`, `testimonial-card`, `icon-box`, `image-text`, `button`, `link`, `badge`, `avatar`, `progress-bar`, `rating`, `social-icons`, `alert`, `quote`, `tabs`, `accordion`, `divider`, `spacer`
+- **Basic** — `text`, `heading`, `image`, `list`, `table`
+- **Forms** — `input`, `textarea`, `select`, `checkbox`
 
 ## Devices
 
@@ -144,6 +152,25 @@ editor.runCommand("core:open-code");
 
 Any [GrapesJS command id](https://grapesjs.com/docs/api/commands.html) can be run/stopped via `runCommand`/`stopCommand`.
 
+```java
+editor.setToolbarVisible(false);
+```
+
+`setToolbarVisible(false)` hides GrapesJS's own internal toolbar entirely (native Undo/Redo/Preview/Fullscreen/View code buttons, the device selector, and any buttons registered via `addToolbarButton`) — useful if your application drives all of these actions from its own UI instead. The canvas and side panels reflow to fill the freed space.
+
+## Toolbar buttons
+
+```java
+editor.addToolbarButton("publish", "Publish");
+editor.addToolbarButtonClickListener(e -> {
+    if ("publish".equals(e.getButtonId())) {
+        publishPage(editor);
+    }
+});
+```
+
+`addToolbarButton(id, label)` registers a button in GrapesJS's own toolbar, next to its built-in Undo/Redo/Preview/Fullscreen buttons — `label` can be plain text or a small HTML/SVG snippet, the same as GrapesJS's own built-in buttons use. A single `addToolbarButtonClickListener` handles clicks from every registered button; the event's `getButtonId()` tells them apart. `removeToolbarButton(id)` unregisters one.
+
 ## Events
 
 ```java
@@ -152,6 +179,7 @@ editor.addSelectListener(e -> log("selected: " + e.getTagName()));
 editor.addValueChangeListener(e -> log("changed: " + e.getValue()));
 editor.addFocusListener(e -> log("focused"));
 editor.addBlurListener(e -> log("blurred"));
+editor.addToolbarButtonClickListener(e -> log("clicked: " + e.getButtonId()));
 ```
 
 ## Value change behavior

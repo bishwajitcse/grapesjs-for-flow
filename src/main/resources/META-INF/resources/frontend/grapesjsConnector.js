@@ -229,6 +229,10 @@ window.Vaadin.Flow.grapesjsConnector = {
                 }, 20);
             },
 
+            setToolbarVisible: function (visible) {
+                ta.classList.toggle('gjs-vaadin-toolbar-hidden', !visible);
+            },
+
             setMode: function (newChangeMode) {
                 changeMode = newChangeMode;
             },
@@ -255,6 +259,42 @@ window.Vaadin.Flow.grapesjsConnector = {
                         this.editor.stopCommand('core:fullscreen');
                     } else {
                         this.editor.runCommand('core:fullscreen');
+                    }
+                });
+            },
+
+            addToolbarButton: function (id, label) {
+                runOrQueue(() => {
+                    const panels = this.editor.Panels;
+                    let panel = panels.getPanel('gjs-vaadin-custom-buttons');
+                    if (!panel) {
+                        panel = panels.addPanel({ id: 'gjs-vaadin-custom-buttons', buttons: [] });
+                        actionsEl.appendChild(panel.view.el);
+                    }
+                    if (panels.getButton('gjs-vaadin-custom-buttons', id)) {
+                        return;
+                    }
+                    panels.addButton('gjs-vaadin-custom-buttons', {
+                        id: id,
+                        label: label,
+                        command: () => {
+                            const event = new Event('gjs-toolbar-button-click');
+                            event.buttonId = id;
+                            c.dispatchEvent(event);
+                        },
+                    });
+                    // PanelView only renders its buttons once, at panel creation; it doesn't
+                    // react to buttons added/removed afterwards, so re-render explicitly.
+                    panel.view.render();
+                });
+            },
+
+            removeToolbarButton: function (id) {
+                runOrQueue(() => {
+                    this.editor.Panels.removeButton('gjs-vaadin-custom-buttons', id);
+                    const panel = this.editor.Panels.getPanel('gjs-vaadin-custom-buttons');
+                    if (panel) {
+                        panel.view.render();
                     }
                 });
             },

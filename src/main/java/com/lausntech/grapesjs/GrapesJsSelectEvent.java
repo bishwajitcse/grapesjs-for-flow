@@ -1,6 +1,8 @@
 package com.lausntech.grapesjs;
 
 import com.vaadin.flow.component.ComponentEvent;
+import com.vaadin.flow.component.DomEvent;
+import com.vaadin.flow.component.EventData;
 
 /**
  * Fired when the selected component in the canvas changes, i.e. on
@@ -9,6 +11,7 @@ import com.vaadin.flow.component.ComponentEvent;
  * shipping large payloads to the server on every click. Register with
  * {@link GrapesJsEditor#addSelectListener(com.vaadin.flow.component.ComponentEventListener)}.
  */
+@DomEvent("gjs-select")
 public class GrapesJsSelectEvent extends ComponentEvent<GrapesJsEditor> {
 
     private final String componentId;
@@ -22,7 +25,8 @@ public class GrapesJsSelectEvent extends ComponentEvent<GrapesJsEditor> {
      * @param componentId the GrapesJS-internal id of the selected component
      * @param tagName the HTML tag name of the selected component
      */
-    public GrapesJsSelectEvent(GrapesJsEditor source, boolean fromClient, String componentId, String tagName) {
+    public GrapesJsSelectEvent(GrapesJsEditor source, boolean fromClient,
+            @EventData("event.componentId") String componentId, @EventData("event.tagName") String tagName) {
         super(source, fromClient);
         this.componentId = componentId;
         this.tagName = tagName;

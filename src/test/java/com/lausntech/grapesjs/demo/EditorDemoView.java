@@ -34,10 +34,15 @@ public class EditorDemoView extends VerticalLayout {
         editor.setSizeFull();
 
         Map<String, List<String>> features = new HashMap<>();
-        features.put("Sections", List.of("hero", "feature-section", "section"));
-        features.put("Layout", List.of("two-columns", "three-columns", "container"));
-        features.put("Components", List.of("card", "button", "link", "image-text"));
-        features.put("Basic", List.of("text", "heading", "image"));
+        features.put("Sections", List.of("navbar", "hero", "about", "services", "feature-section", "pricing",
+                "testimonials", "team", "stats", "gallery", "blog-grid", "cta", "newsletter", "contact", "logos",
+                "video-section", "timeline", "faq", "section", "footer"));
+        features.put("Layout", List.of("two-columns", "three-columns", "four-columns", "container"));
+        features.put("Components", List.of("card", "pricing-card", "testimonial-card", "icon-box", "button", "link",
+                "image-text", "badge", "avatar", "progress-bar", "rating", "social-icons", "alert", "quote", "tabs",
+                "accordion", "divider", "spacer"));
+        features.put("Basic", List.of("text", "heading", "image", "list", "table"));
+        features.put("Forms", List.of("input", "textarea", "select", "checkbox"));
         editor.addBlocks(features);
 
         editor.setValue("""
@@ -63,6 +68,14 @@ public class EditorDemoView extends VerticalLayout {
         editor.addReadyListener(e -> log("Editor ready"));
         editor.addValueChangeListener(e -> log("Content changed (" + e.getValue().length() + " chars)"));
         editor.addSelectListener(e -> log("Selected: " + (e.getTagName().isEmpty() ? "(none)" : e.getTagName())));
+
+        editor.addToolbarButton("publish", "Publish");
+        editor.addToolbarButtonClickListener(e -> {
+            if ("publish".equals(e.getButtonId())) {
+                log("Publish clicked (server-side listener fired)");
+                Notification.show("Published!");
+            }
+        });
 
         eventLog.setReadOnly(true);
         eventLog.setWidthFull();
@@ -123,9 +136,11 @@ public class EditorDemoView extends VerticalLayout {
             editor.clear();
             log("Cleared");
         });
+        Button toggleToolbar = new Button("Toggle internal toolbar",
+                e -> editor.setToolbarVisible(!editor.isToolbarVisible()));
 
         HorizontalLayout toolbar = new HorizontalLayout(save, load, getHtml, getCss, undo, redo, preview, fullscreen,
-                clear);
+                clear, toggleToolbar);
         toolbar.setPadding(true);
         return toolbar;
     }
