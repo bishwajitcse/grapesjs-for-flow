@@ -105,6 +105,38 @@ function expandStyleShorthand(html) {
     return root.innerHTML;
 }
 
+/**
+ * Converts a component style object (as returned by Component#getStyle) into
+ * the newline-separated "prop: value;" text shown in the inline styles
+ * textarea.
+ */
+function styleObjectToText(styleObj) {
+    return Object.keys(styleObj || {})
+        .filter((prop) => styleObj[prop] !== undefined && styleObj[prop] !== '')
+        .map((prop) => `${prop}: ${styleObj[prop]};`)
+        .join('\n');
+}
+
+/**
+ * Parses the inline styles textarea's "prop: value;" text back into a style
+ * object suitable for Component#setStyle.
+ */
+function parseStyleText(text) {
+    const result = {};
+    (text || '').split(';').forEach((decl) => {
+        const idx = decl.indexOf(':');
+        if (idx === -1) {
+            return;
+        }
+        const prop = decl.slice(0, idx).trim();
+        const value = decl.slice(idx + 1).trim();
+        if (prop && value) {
+            result[prop] = value;
+        }
+    });
+    return result;
+}
+
 window.Vaadin.Flow.grapesjsConnector = {
 
     /**
@@ -372,6 +404,10 @@ window.Vaadin.Flow.grapesjsConnector = {
                     <div class="gjs-vaadin-layers"></div>
                     <div class="gjs-vaadin-selectors"></div>
                     <div class="gjs-vaadin-styles"></div>
+                    <div class="gjs-vaadin-inline-style">
+                        <div class="gjs-vaadin-inline-style-label">Inline styles</div>
+                        <textarea class="gjs-vaadin-inline-style-textarea" placeholder="property: value;" spellcheck="false" disabled></textarea>
+                    </div>
                     <div class="gjs-vaadin-traits"></div>
                 </div>
             </div>
@@ -383,6 +419,7 @@ window.Vaadin.Flow.grapesjsConnector = {
         const layersEl = root.querySelector('.gjs-vaadin-layers');
         const selectorsEl = root.querySelector('.gjs-vaadin-selectors');
         const stylesEl = root.querySelector('.gjs-vaadin-styles');
+        const inlineStyleTextarea = root.querySelector('.gjs-vaadin-inline-style-textarea');
         const traitsEl = root.querySelector('.gjs-vaadin-traits');
         const actionsEl = root.querySelector('.gjs-vaadin-topbar-actions');
         const devicesEl = root.querySelector('.gjs-vaadin-topbar-devices');
@@ -454,6 +491,43 @@ window.Vaadin.Flow.grapesjsConnector = {
             });
         }
 
+        // Raw inline-styles textarea: always mirrors the selected
+        // component's full style object (all properties, including those
+        // already surfaced by the sectors above), and lets the user add,
+        // edit or remove properties by editing the CSS text directly.
+        let inlineStyleEditing = false;
+
+        function refreshInlineStyleTextarea(component) {
+            if (inlineStyleEditing) {
+                return;
+            }
+            const style = component && component.getStyle ? component.getStyle() : null;
+            inlineStyleTextarea.value = styleObjectToText(style);
+            inlineStyleTextarea.disabled = !component;
+        }
+
+        function applyInlineStyleTextarea() {
+            const component = editor.getSelected();
+            if (!component) {
+                return;
+            }
+            component.setStyle(parseStyleText(inlineStyleTextarea.value));
+        }
+
+        let inlineStyleApplyTimeout;
+        inlineStyleTextarea.addEventListener('focus', () => {
+            inlineStyleEditing = true;
+        });
+        inlineStyleTextarea.addEventListener('blur', () => {
+            inlineStyleEditing = false;
+            clearTimeout(inlineStyleApplyTimeout);
+            applyInlineStyleTextarea();
+        });
+        inlineStyleTextarea.addEventListener('input', () => {
+            clearTimeout(inlineStyleApplyTimeout);
+            inlineStyleApplyTimeout = setTimeout(applyInlineStyleTextarea, 400);
+        });
+
         editor.on('load', () => {
             setTimeout(() => {
                 const undoRedoPanel = editor.Panels.addPanel({
@@ -510,6 +584,7 @@ window.Vaadin.Flow.grapesjsConnector = {
 
         editor.on('component:selected', (component) => {
             refreshOtherStylesSector(component);
+            refreshInlineStyleTextarea(component);
             const event = new Event('gjs-select');
             event.componentId = (component && component.getId && component.getId()) || '';
             event.tagName = (component && component.get && component.get('tagName')) || '';
@@ -518,6 +593,7 @@ window.Vaadin.Flow.grapesjsConnector = {
 
         editor.on('component:deselected', () => {
             refreshOtherStylesSector(null);
+            refreshInlineStyleTextarea(null);
             const event = new Event('gjs-select');
             event.componentId = '';
             event.tagName = '';
@@ -527,6 +603,7 @@ window.Vaadin.Flow.grapesjsConnector = {
         editor.on('component:styleUpdate', (component) => {
             if (editor.getSelected() === component) {
                 refreshOtherStylesSector(component);
+                refreshInlineStyleTextarea(component);
             }
         });
 

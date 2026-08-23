@@ -186,6 +186,38 @@
     border-bottom: 1px solid var(--lumo-contrast-10pct);
 }
 
+.gjs-vaadin-inline-style {
+    flex-shrink: 0;
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--lumo-contrast-10pct);
+}
+
+.gjs-vaadin-inline-style-label {
+    font-size: var(--lumo-font-size-xs);
+    font-weight: 600;
+    color: var(--lumo-secondary-text-color);
+    text-transform: uppercase;
+    margin-bottom: 6px;
+}
+
+.gjs-vaadin-inline-style-textarea {
+    width: 100%;
+    min-height: 70px;
+    box-sizing: border-box;
+    resize: vertical;
+    font-family: monospace;
+    font-size: var(--lumo-font-size-xs);
+    padding: 6px;
+    border: 1px solid var(--lumo-contrast-20pct);
+    border-radius: var(--lumo-border-radius-s);
+    background: var(--lumo-base-color);
+    color: var(--lumo-body-text-color);
+}
+
+.gjs-vaadin-inline-style-textarea:disabled {
+    opacity: 0.5;
+}
+
 .gjs-vaadin-traits {
     flex-shrink: 0;
     max-height: 30%;
