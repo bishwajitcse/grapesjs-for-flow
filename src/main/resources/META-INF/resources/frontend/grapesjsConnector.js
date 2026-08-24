@@ -50,10 +50,17 @@ function inlineHtmlCss(html, css) {
                 return;
             }
             matches.forEach((el) => {
-                for (let i = 0; i < rule.style.length; i++) {
-                    const prop = rule.style.item(i);
-                    el.style.setProperty(prop, rule.style.getPropertyValue(prop), rule.style.getPropertyPriority(prop));
-                }
+                // Merge as raw cssText, not by copying rule.style's
+                // individual longhand properties one by one: the CSSOM
+                // expands shorthands (border, background, font, ...) into
+                // their longhands as soon as rule.style is indexed/read
+                // per-property, and any longhand whose value depends on a
+                // custom property (e.g. `border: 1.5px solid var(--ink)`)
+                // comes back empty from that expansion - silently dropping
+                // the whole declaration. cssText round-trips such values
+                // (and shorthands generally) untouched.
+                const existing = el.style.cssText;
+                el.style.cssText = (existing ? existing.replace(/;?\s*$/, '; ') : '') + rule.style.cssText;
             });
         });
     });
@@ -456,45 +463,15 @@ window.Vaadin.Flow.grapesjsConnector = {
         Object.assign(baseConfig, customConfig, options || {});
         baseConfig.container = canvasEl;
 
-        // Properties already surfaced by one of the configured sectors above
-        // (or by the host app's own customConfig/options overrides). Any
-        // other inline style property found on a selected element is not
-        // otherwise shown anywhere in the Style Manager, so it's surfaced
-        // dynamically in the "Other styles" sector below.
-        const coveredStyleProps = new Set();
-        ((baseConfig.styleManager && baseConfig.styleManager.sectors) || []).forEach((sector) => {
-            (sector.buildProps || []).forEach((p) => coveredStyleProps.add(p));
-            (sector.properties || []).forEach((p) => coveredStyleProps.add(typeof p === 'string' ? p : p.property));
-        });
-
         const editor = grapesjs.init(baseConfig);
         c.$connector.editor = editor;
-
-        const OTHER_STYLES_SECTOR = 'gjs-vaadin-other-styles';
-        let otherStyleProps = [];
-
-        function refreshOtherStylesSector(component) {
-            const sm = editor.StyleManager;
-            if (!sm.getSector(OTHER_STYLES_SECTOR)) {
-                sm.addSector(OTHER_STYLES_SECTOR, { name: 'Other styles', open: false, properties: [] });
-            }
-            otherStyleProps.forEach((p) => sm.removeProperty(OTHER_STYLES_SECTOR, p));
-            otherStyleProps = [];
-
-            const style = component && component.getStyle ? component.getStyle() : null;
-            Object.keys(style || {}).forEach((prop) => {
-                if (coveredStyleProps.has(prop)) {
-                    return;
-                }
-                sm.addProperty(OTHER_STYLES_SECTOR, { property: prop, type: 'text' });
-                otherStyleProps.push(prop);
-            });
-        }
 
         // Raw inline-styles textarea: always mirrors the selected
         // component's full style object (all properties, including those
         // already surfaced by the sectors above), and lets the user add,
-        // edit or remove properties by editing the CSS text directly.
+        // edit or remove properties - including ones the sector widgets
+        // above don't expose, or values like `var(...)` they may not
+        // round-trip - by editing the CSS text directly.
         let inlineStyleEditing = false;
 
         function refreshInlineStyleTextarea(component) {
@@ -583,7 +560,6 @@ window.Vaadin.Flow.grapesjsConnector = {
         });
 
         editor.on('component:selected', (component) => {
-            refreshOtherStylesSector(component);
             refreshInlineStyleTextarea(component);
             const event = new Event('gjs-select');
             event.componentId = (component && component.getId && component.getId()) || '';
@@ -592,7 +568,6 @@ window.Vaadin.Flow.grapesjsConnector = {
         });
 
         editor.on('component:deselected', () => {
-            refreshOtherStylesSector(null);
             refreshInlineStyleTextarea(null);
             const event = new Event('gjs-select');
             event.componentId = '';
@@ -602,7 +577,6 @@ window.Vaadin.Flow.grapesjsConnector = {
 
         editor.on('component:styleUpdate', (component) => {
             if (editor.getSelected() === component) {
-                refreshOtherStylesSector(component);
                 refreshInlineStyleTextarea(component);
             }
         });
