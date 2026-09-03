@@ -85,9 +85,39 @@ function expandStyleShorthand(html) {
 
         const background = decls.getPropertyValue('background');
         if (background) {
-            decls.removeProperty('background');
             probe.style.cssText = 'background:' + background;
-            decls.setProperty('background-color', probe.style.backgroundColor || background);
+            // A layer without an explicit color leaves the background-color
+            // sub-property unset, which some engines serialize back as the
+            // literal keyword "initial" rather than an empty string.
+            const bgColor = probe.style.backgroundColor;
+            const hasColor = !!bgColor && bgColor !== 'initial';
+            const bgImage = probe.style.backgroundImage;
+            const hasImage = !!bgImage && bgImage !== 'none' && bgImage !== 'initial';
+            decls.removeProperty('background');
+            if (hasColor) {
+                decls.setProperty('background-color', bgColor);
+            }
+            if (hasImage) {
+                // Layered gradients/images have no single color component
+                // (hasColor above is false for them): keep them as
+                // background-image rather than collapsing into
+                // background-color, whose value syntax can't hold a
+                // gradient and would silently drop the declaration.
+                decls.setProperty('background-image', bgImage);
+                if (probe.style.backgroundRepeat) {
+                    decls.setProperty('background-repeat', probe.style.backgroundRepeat);
+                }
+                if (probe.style.backgroundPosition) {
+                    decls.setProperty('background-position', probe.style.backgroundPosition);
+                }
+                if (probe.style.backgroundSize) {
+                    decls.setProperty('background-size', probe.style.backgroundSize);
+                }
+            } else if (!hasColor) {
+                // Couldn't decompose (e.g. a var()-based shorthand): keep
+                // the original shorthand rather than losing it.
+                decls.setProperty('background', background);
+            }
         }
 
         const font = decls.getPropertyValue('font');
