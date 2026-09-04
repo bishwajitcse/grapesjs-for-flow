@@ -37,7 +37,7 @@ public class GrapesJsEditorView extends VerticalLayout {
 		Map<String, List<String>> features = new HashMap<>();
 		features.put("Sections", List.of("hero", "about", "services", "feature-section", "pricing",
 				"testimonials", "team", "stats", "blog-grid", "cta", "logos",
-				 "timeline", "faq", "section"));
+				 "embed", "timeline", "faq", "section"));
 		
 		features.put("Layout", List.of("two-columns", "three-columns", "four-columns", "container"));
 		
@@ -51,10 +51,11 @@ public class GrapesJsEditorView extends VerticalLayout {
 
 		editor.setValue(
 				"""
-						           <section style="padding:88px 24px;background:#f8fafc;text-align:center;">
+						           <section style="padding:88px 24px;
+background: radial-gradient(circle at 8% 12%,rgba(25,198,194,.18),transparent 27%),radial-gradient(circle at 94% 4%,rgba(55,108,251,.14),transparent 30%),linear-gradient(145deg,#f9fefe 0%,#edf8fa 53%,#e1f1f5 100%);text-align:center;">
 						  <div style="max-width:820px;margin:0 auto;">
 						    <div style="display:inline-block;padding:7px 14px;border-radius:999px;background:#e0f2fe;color:#0369a1;font:600 13px Arial,sans-serif;margin-bottom:18px;">SMARTER WAY TO WORK</div>
-						    <h1 style="margin:0 0 20px;font:700 48px/1.12 Arial,sans-serif;letter-spacing:-1.5px;color:#0f172a;">Build better experiences with a modern platform</h1>
+						    <h1 style="box-sizing:border-box;background:linear-gradient(105deg,#054a61 5%,#087f98 58%,#315ee9);-webkit-background-clip:text;background-clip:text;color:transparent">Build better experiences with a modern platform</h1>
 						    <p style="max-width:680px;margin:0 auto 30px;font:400 18px/1.7 Arial,sans-serif;color:#64748b;">Bring your teams, workflows and customer experiences together in one simple, powerful workspace.</p>
 						    <a href="#" style="display:inline-block;padding:14px 24px;border-radius:10px;background:#2563eb;color:#fff;text-decoration:none;font:600 15px Arial,sans-serif;">Get Started</a>
 						    <a href="#" style="display:inline-block;margin-left:10px;padding:13px 24px;border:1px solid #cbd5e1;border-radius:10px;color:#334155;text-decoration:none;font:600 15px Arial,sans-serif;background:#fff;">Learn More</a>

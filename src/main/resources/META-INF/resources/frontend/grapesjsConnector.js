@@ -113,6 +113,16 @@ function expandStyleShorthand(html) {
                 if (probe.style.backgroundSize) {
                     decls.setProperty('background-size', probe.style.backgroundSize);
                 }
+                // background-clip is itself a component of the `background`
+                // shorthand (e.g. the gradient-text trick relies on
+                // `background-clip: text`/`-webkit-background-clip: text`,
+                // which browsers fold into the shorthand's serialized
+                // value). Preserve it explicitly, or removeProperty('background')
+                // above silently drops it.
+                if (probe.style.backgroundClip && probe.style.backgroundClip !== 'initial') {
+                    decls.setProperty('background-clip', probe.style.backgroundClip);
+                    decls.setProperty('-webkit-background-clip', probe.style.backgroundClip);
+                }
             } else if (!hasColor) {
                 // Couldn't decompose (e.g. a var()-based shorthand): keep
                 // the original shorthand rather than losing it.
@@ -172,6 +182,89 @@ function parseStyleText(text) {
         }
     });
     return result;
+}
+
+const EMBED_PLACEHOLDER_HTML = '<div data-gjs-type="embed-placeholder" '
+    + 'style="padding:24px;text-align:center;border:1px dashed #94a3b8;border-radius:8px;'
+    + 'font:400 13px Arial,sans-serif;color:#64748b;background:#f8fafc">'
+    + 'Double-click to paste embed code (e.g. a YouTube embed)</div>';
+
+/**
+ * Registers the `embed` component type used for pasting third-party embed
+ * markup (YouTube/Vimeo/Google Maps iframes, Twitter/Instagram
+ * blockquote+script snippets, ...) into the canvas. The block for it
+ * (registered as the "embed" preset, see GrapesJsBlockPresets) drops a
+ * placeholder; double-clicking the component opens a paste-code prompt
+ * whose contents are parsed as real child components - the same path
+ * `editor.setComponents()` already uses - so markup like a plain <iframe>
+ * renders (and exports via getHtml()) exactly as pasted, rather than being
+ * mangled by the canvas's rich-text editing.
+ */
+function registerEmbedComponent(editor) {
+    editor.Components.addType('embed-placeholder', {
+        isComponent: (el) => !!(el.getAttribute && el.getAttribute('data-gjs-type') === 'embed-placeholder'),
+        model: {
+            defaults: {
+                draggable: false,
+                droppable: false,
+                selectable: false,
+                hoverable: false,
+                editable: false,
+                removable: false,
+                copyable: false,
+                attributes: { 'data-gjs-type': 'embed-placeholder' },
+            },
+        },
+    });
+
+    editor.Components.addType('embed', {
+        isComponent: (el) => !!(el.getAttribute && el.getAttribute('data-gjs-type') === 'embed'),
+        model: {
+            defaults: {
+                draggable: true,
+                droppable: false,
+                editable: false,
+                attributes: { 'data-gjs-type': 'embed' },
+            },
+        },
+        view: {
+            events: { dblclick: 'onDblClick' },
+            onDblClick() {
+                openEmbedPrompt(editor, this.model);
+            },
+        },
+    });
+}
+
+function isEmbedPlaceholder(model) {
+    const children = model.components();
+    return children.length === 1 && children.at(0).get('type') === 'embed-placeholder';
+}
+
+function openEmbedPrompt(editor, model) {
+    const currentCode = isEmbedPlaceholder(model)
+        ? ''
+        : model.components().map((child) => editor.getHtml({ component: child })).join('\n');
+
+    const wrapper = document.createElement('div');
+    wrapper.className = 'gjs-vaadin-embed-modal';
+    wrapper.innerHTML = `
+        <textarea class="gjs-vaadin-embed-textarea" placeholder="Paste embed code here, e.g. a YouTube iframe embed" spellcheck="false"></textarea>
+        <div class="gjs-vaadin-embed-modal-actions">
+            <button type="button" class="gjs-vaadin-embed-apply">Apply</button>
+        </div>
+    `;
+    const textarea = wrapper.querySelector('.gjs-vaadin-embed-textarea');
+    textarea.value = currentCode;
+
+    wrapper.querySelector('.gjs-vaadin-embed-apply').addEventListener('click', () => {
+        const code = textarea.value.trim();
+        model.components(code || EMBED_PLACEHOLDER_HTML);
+        editor.Modal.close();
+    });
+
+    editor.Modal.open({ title: 'Embed code', content: wrapper });
+    setTimeout(() => textarea.focus(), 0);
 }
 
 window.Vaadin.Flow.grapesjsConnector = {
@@ -495,6 +588,8 @@ window.Vaadin.Flow.grapesjsConnector = {
 
         const editor = grapesjs.init(baseConfig);
         c.$connector.editor = editor;
+
+        registerEmbedComponent(editor);
 
         // Raw inline-styles textarea: always mirrors the selected
         // component's full style object (all properties, including those

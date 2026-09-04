@@ -439,6 +439,14 @@ public final class GrapesJsBlockPresets {
                 </section>
                 """);
 
+        register("embed", "Embed", """
+                <div data-gjs-type="embed">
+                    <div data-gjs-type="embed-placeholder" style="padding:24px;text-align:center;border:1px dashed #94a3b8;border-radius:8px;font:400 13px Arial,sans-serif;color:#64748b;background:#f8fafc">
+                        Double-click to paste embed code (e.g. a YouTube embed)
+                    </div>
+                </div>
+                """);
+
         register("video-section", "Video Section", """
                 <section style="padding:64px 24px;text-align:center">
                     <h2 style="margin:0 0 8px;font:700 32px Arial,sans-serif;color:#0f172a">See it in action</h2>
