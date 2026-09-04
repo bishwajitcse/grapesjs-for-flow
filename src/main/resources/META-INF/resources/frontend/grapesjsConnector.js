@@ -292,6 +292,15 @@ function svgTagName(el) {
  * as traits in the Settings panel - GrapesJS's default component type
  * would let a user select/move these elements, but wouldn't surface
  * anything beyond the generic id/title HTML traits.
+ *
+ * Every type below extends GrapesJS's built-in `svg`/`svg-in` types rather
+ * than defining a fresh one: those built-ins are the ones whose view
+ * creates DOM nodes via `createElementNS` (SVG namespace). A plain custom
+ * type falls back to the default component view's unnamespaced
+ * `document.createElement`, which for an SVG child produces an inert,
+ * non-rendering element (and mangles camelCase tags like `linearGradient`
+ * to all-lowercase) - the element sits in the model/layers tree but draws
+ * nothing on the canvas.
  */
 function registerSvgComponents(editor) {
     const commonTraits = [
@@ -303,12 +312,21 @@ function registerSvgComponents(editor) {
         { type: 'text', name: 'transform' },
     ];
 
+    // `svg-in` (the built-in type these all extend for its namespaced view -
+    // see the block comment above) defaults to selectable: false / hoverable:
+    // false, since it's meant for static icon-style SVGs where only the
+    // whole `<svg>` is picked as one unit. Editing individual shapes needs
+    // both back on.
+    const selectableDefaults = { selectable: true, hoverable: true };
+
     editor.Components.addType('svg-element', {
+        extend: 'svg-in',
         isComponent: (el) => isSvgElement(el) && !SVG_SPECIFIC_TAGS.includes(svgTagName(el)),
-        model: { defaults: { traits: commonTraits } },
+        model: { defaults: { ...selectableDefaults, traits: commonTraits } },
     });
 
     editor.Components.addType('svg', {
+        extend: 'svg',
         isComponent: (el) => isSvgElement(el) && svgTagName(el) === 'svg',
         model: {
             defaults: {
@@ -324,14 +342,17 @@ function registerSvgComponents(editor) {
     });
 
     editor.Components.addType('svg-path', {
+        extend: 'svg-in',
         isComponent: (el) => isSvgElement(el) && svgTagName(el) === 'path',
-        model: { defaults: { traits: [{ type: 'text', name: 'd', label: 'Path data' }, ...commonTraits] } },
+        model: { defaults: { ...selectableDefaults, traits: [{ type: 'text', name: 'd', label: 'Path data' }, ...commonTraits] } },
     });
 
     editor.Components.addType('svg-circle', {
+        extend: 'svg-in',
         isComponent: (el) => isSvgElement(el) && svgTagName(el) === 'circle',
         model: {
             defaults: {
+                ...selectableDefaults,
                 traits: [
                     { type: 'text', name: 'cx' },
                     { type: 'text', name: 'cy' },
@@ -343,9 +364,11 @@ function registerSvgComponents(editor) {
     });
 
     editor.Components.addType('svg-ellipse', {
+        extend: 'svg-in',
         isComponent: (el) => isSvgElement(el) && svgTagName(el) === 'ellipse',
         model: {
             defaults: {
+                ...selectableDefaults,
                 traits: [
                     { type: 'text', name: 'cx' },
                     { type: 'text', name: 'cy' },
@@ -358,9 +381,11 @@ function registerSvgComponents(editor) {
     });
 
     editor.Components.addType('svg-rect', {
+        extend: 'svg-in',
         isComponent: (el) => isSvgElement(el) && svgTagName(el) === 'rect',
         model: {
             defaults: {
+                ...selectableDefaults,
                 traits: [
                     { type: 'text', name: 'x' },
                     { type: 'text', name: 'y' },
@@ -375,9 +400,11 @@ function registerSvgComponents(editor) {
     });
 
     editor.Components.addType('svg-line', {
+        extend: 'svg-in',
         isComponent: (el) => isSvgElement(el) && svgTagName(el) === 'line',
         model: {
             defaults: {
+                ...selectableDefaults,
                 traits: [
                     { type: 'text', name: 'x1' },
                     { type: 'text', name: 'y1' },
@@ -390,14 +417,17 @@ function registerSvgComponents(editor) {
     });
 
     editor.Components.addType('svg-poly', {
+        extend: 'svg-in',
         isComponent: (el) => isSvgElement(el) && ['polygon', 'polyline'].includes(svgTagName(el)),
-        model: { defaults: { traits: [{ type: 'text', name: 'points' }, ...commonTraits] } },
+        model: { defaults: { ...selectableDefaults, traits: [{ type: 'text', name: 'points' }, ...commonTraits] } },
     });
 
     editor.Components.addType('svg-text', {
+        extend: 'svg-in',
         isComponent: (el) => isSvgElement(el) && svgTagName(el) === 'text',
         model: {
             defaults: {
+                ...selectableDefaults,
                 editable: true,
                 traits: [
                     { type: 'text', name: 'x' },
@@ -408,7 +438,60 @@ function registerSvgComponents(editor) {
                 ],
             },
         },
+        // `svg-in` (see the block comment above) only overrides element
+        // creation; it doesn't carry the built-in `text` type's RTE wiring
+        // (that lives on a separate view class, and a component can only
+        // extend one), so double-click-to-edit has to be added by hand here
+        // - otherwise every <text> keeps its parsed content forever.
+        //
+        // A native `contenteditable` on the element (the first approach
+        // tried here) does NOT work: `contenteditable` is an HTML editing
+        // feature only - browsers accept the attribute on an SVG element and
+        // even focus it, but never wire up their text-insertion machinery
+        // for it, so typed keystrokes silently go nowhere. A small prompt is
+        // the reliable cross-browser option, and matches the pattern already
+        // used by the `embed` component above for editing its content.
+        view: {
+            events: { dblclick: 'onEditStart' },
+            onEditStart(ev) {
+                ev.stopPropagation();
+                openTextPrompt(editor, this.model);
+            },
+        },
     });
+}
+
+function openTextPrompt(editor, model) {
+    const currentText = model.components().at(0)?.get('content') || '';
+
+    const wrapper = document.createElement('div');
+    wrapper.className = 'gjs-vaadin-embed-modal';
+    wrapper.innerHTML = `
+        <input type="text" class="gjs-vaadin-text-prompt-input" spellcheck="false" />
+        <div class="gjs-vaadin-embed-modal-actions">
+            <button type="button" class="gjs-vaadin-embed-apply">Apply</button>
+        </div>
+    `;
+    const input = wrapper.querySelector('.gjs-vaadin-text-prompt-input');
+    input.value = currentText;
+
+    const apply = () => {
+        model.components(input.value);
+        editor.Modal.close();
+    };
+    wrapper.querySelector('.gjs-vaadin-embed-apply').addEventListener('click', apply);
+    input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            apply();
+        }
+    });
+
+    editor.Modal.open({ title: 'Edit text', content: wrapper });
+    setTimeout(() => {
+        input.focus();
+        input.select();
+    }, 0);
 }
 
 window.Vaadin.Flow.grapesjsConnector = {
