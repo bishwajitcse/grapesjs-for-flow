@@ -267,6 +267,150 @@ function openEmbedPrompt(editor, model) {
     setTimeout(() => textarea.focus(), 0);
 }
 
+const SVG_NS = 'http://www.w3.org/2000/svg';
+
+// Tags with a dedicated component type below - excluded from the
+// `svg-element` catch-all's isComponent match so that match order (which
+// GrapesJS does not guarantee to prefer the most-recently-added type for
+// every parse path - e.g. an appended root element resolves differently
+// than its parsed children) can't cause the generic fallback to shadow a
+// more specific type.
+const SVG_SPECIFIC_TAGS = ['svg', 'path', 'circle', 'ellipse', 'rect', 'line', 'polygon', 'polyline', 'text'];
+
+function isSvgElement(el) {
+    return !!(el && el.namespaceURI === SVG_NS);
+}
+
+function svgTagName(el) {
+    return el && el.tagName ? el.tagName.toLowerCase() : '';
+}
+
+/**
+ * Registers component types for inline SVG markup (an `<svg>` dropped into
+ * the canvas, e.g. via the "SVG Icon" block) so its shape elements expose
+ * their SVG-specific attributes (path data, fill/stroke, coordinates, ...)
+ * as traits in the Settings panel - GrapesJS's default component type
+ * would let a user select/move these elements, but wouldn't surface
+ * anything beyond the generic id/title HTML traits.
+ */
+function registerSvgComponents(editor) {
+    const commonTraits = [
+        'id',
+        { type: 'color', name: 'fill' },
+        { type: 'color', name: 'stroke' },
+        { type: 'text', name: 'stroke-width', label: 'Stroke width' },
+        { type: 'text', name: 'opacity' },
+        { type: 'text', name: 'transform' },
+    ];
+
+    editor.Components.addType('svg-element', {
+        isComponent: (el) => isSvgElement(el) && !SVG_SPECIFIC_TAGS.includes(svgTagName(el)),
+        model: { defaults: { traits: commonTraits } },
+    });
+
+    editor.Components.addType('svg', {
+        isComponent: (el) => isSvgElement(el) && svgTagName(el) === 'svg',
+        model: {
+            defaults: {
+                traits: [
+                    'id',
+                    { type: 'text', name: 'viewBox' },
+                    { type: 'text', name: 'width' },
+                    { type: 'text', name: 'height' },
+                    { type: 'text', name: 'preserveAspectRatio' },
+                ],
+            },
+        },
+    });
+
+    editor.Components.addType('svg-path', {
+        isComponent: (el) => isSvgElement(el) && svgTagName(el) === 'path',
+        model: { defaults: { traits: [{ type: 'text', name: 'd', label: 'Path data' }, ...commonTraits] } },
+    });
+
+    editor.Components.addType('svg-circle', {
+        isComponent: (el) => isSvgElement(el) && svgTagName(el) === 'circle',
+        model: {
+            defaults: {
+                traits: [
+                    { type: 'text', name: 'cx' },
+                    { type: 'text', name: 'cy' },
+                    { type: 'text', name: 'r' },
+                    ...commonTraits,
+                ],
+            },
+        },
+    });
+
+    editor.Components.addType('svg-ellipse', {
+        isComponent: (el) => isSvgElement(el) && svgTagName(el) === 'ellipse',
+        model: {
+            defaults: {
+                traits: [
+                    { type: 'text', name: 'cx' },
+                    { type: 'text', name: 'cy' },
+                    { type: 'text', name: 'rx' },
+                    { type: 'text', name: 'ry' },
+                    ...commonTraits,
+                ],
+            },
+        },
+    });
+
+    editor.Components.addType('svg-rect', {
+        isComponent: (el) => isSvgElement(el) && svgTagName(el) === 'rect',
+        model: {
+            defaults: {
+                traits: [
+                    { type: 'text', name: 'x' },
+                    { type: 'text', name: 'y' },
+                    { type: 'text', name: 'width' },
+                    { type: 'text', name: 'height' },
+                    { type: 'text', name: 'rx' },
+                    { type: 'text', name: 'ry' },
+                    ...commonTraits,
+                ],
+            },
+        },
+    });
+
+    editor.Components.addType('svg-line', {
+        isComponent: (el) => isSvgElement(el) && svgTagName(el) === 'line',
+        model: {
+            defaults: {
+                traits: [
+                    { type: 'text', name: 'x1' },
+                    { type: 'text', name: 'y1' },
+                    { type: 'text', name: 'x2' },
+                    { type: 'text', name: 'y2' },
+                    ...commonTraits,
+                ],
+            },
+        },
+    });
+
+    editor.Components.addType('svg-poly', {
+        isComponent: (el) => isSvgElement(el) && ['polygon', 'polyline'].includes(svgTagName(el)),
+        model: { defaults: { traits: [{ type: 'text', name: 'points' }, ...commonTraits] } },
+    });
+
+    editor.Components.addType('svg-text', {
+        isComponent: (el) => isSvgElement(el) && svgTagName(el) === 'text',
+        model: {
+            defaults: {
+                editable: true,
+                traits: [
+                    { type: 'text', name: 'x' },
+                    { type: 'text', name: 'y' },
+                    { type: 'text', name: 'font-size', label: 'Font size' },
+                    { type: 'text', name: 'font-family', label: 'Font family' },
+                    ...commonTraits,
+                ],
+            },
+        },
+    });
+}
+
 window.Vaadin.Flow.grapesjsConnector = {
 
     /**
@@ -590,6 +734,7 @@ window.Vaadin.Flow.grapesjsConnector = {
         c.$connector.editor = editor;
 
         registerEmbedComponent(editor);
+        registerSvgComponents(editor);
 
         // Raw inline-styles textarea: always mirrors the selected
         // component's full style object (all properties, including those

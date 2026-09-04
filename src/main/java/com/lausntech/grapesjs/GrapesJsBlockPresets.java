@@ -40,6 +40,12 @@ public final class GrapesJsBlockPresets {
         register("image", "Image",
                 "<img src=\"https://placehold.co/600x400\" style=\"max-width:100%\" alt=\"\" />");
 
+        register("svg-icon", "SVG Icon", """
+                <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="#4f46e5" stroke-width="2">
+                    <path d="M12 2l2.9 6.6 7.1.6-5.4 4.7 1.7 7-6.3-3.8-6.3 3.8 1.7-7-5.4-4.7 7.1-.6z" />
+                </svg>
+                """);
+
         register("button", "Button", """
                 <a href="#" style="display:inline-block;padding:10px 20px;background:#4f46e5;
                     color:#fff;border-radius:6px;text-decoration:none">Click me</a>
