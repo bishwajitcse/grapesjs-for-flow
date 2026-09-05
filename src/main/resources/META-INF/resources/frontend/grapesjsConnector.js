@@ -249,7 +249,7 @@ function openEmbedPrompt(editor, model) {
     const wrapper = document.createElement('div');
     wrapper.className = 'gjs-vaadin-embed-modal';
     wrapper.innerHTML = `
-        <textarea class="gjs-vaadin-embed-textarea" placeholder="Paste embed code here, e.g. a YouTube iframe embed" spellcheck="false"></textarea>
+        <textarea style="width:100%;height:400px" class="gjs-vaadin-embed-textarea" placeholder="Paste embed code here, e.g. a YouTube iframe embed" spellcheck="false"></textarea>
         <div class="gjs-vaadin-embed-modal-actions">
             <button type="button" class="gjs-vaadin-embed-apply">Apply</button>
         </div>
@@ -590,6 +590,31 @@ window.Vaadin.Flow.grapesjsConnector = {
                 runOrQueue(() => {
                     this.editor.setComponents('');
                     this.editor.setStyle('');
+                });
+            },
+
+            // Inserts raw HTML right after the currently selected component
+            // (or as its child, if it can't have siblings - e.g. it's the
+            // root wrapper), so pasted markup lands "where the cursor is"
+            // rather than always at a fixed spot. Falls back to appending at
+            // the end of the page when nothing is selected.
+            insertHtml: function (html) {
+                runOrQueue(() => {
+                    const expanded = expandStyleShorthand(html || '');
+                    const selected = this.editor.getSelected();
+                    const parent = selected && selected.parent();
+                    let inserted;
+                    if (selected && parent) {
+                        inserted = parent.append(expanded, { at: selected.index() + 1 });
+                    } else if (selected) {
+                        inserted = selected.append(expanded);
+                    } else {
+                        inserted = this.editor.getWrapper().append(expanded);
+                    }
+                    const last = inserted && inserted[inserted.length - 1];
+                    if (last) {
+                        this.editor.select(last);
+                    }
                 });
             },
 

@@ -429,6 +429,22 @@ public class GrapesJsEditor extends CustomField<String> implements HasSize, HasT
         return callAndGetString("$connector.getFullHtml");
     }
 
+    /**
+     * Inserts raw HTML into the canvas at the current selection: right after
+     * the currently selected component (as a new sibling), or as its child
+     * if it can't have siblings (e.g. it's the root wrapper). If nothing is
+     * currently selected, the HTML is appended at the end of the page.
+     * <p>
+     * Intended for an "Insert code" toolbar button: open a dialog, let the
+     * user paste an HTML snippet, and call this with the pasted text on
+     * confirm so it lands where they were last working in the canvas.
+     *
+     * @param html the HTML snippet to insert
+     */
+    public void insertHtml(String html) {
+        runBeforeClientResponse(ui -> getElement().callJsFunction("$connector.insertHtml", html == null ? "" : html));
+    }
+
     // ------------------------------------------------------------------
     // Project data
     // ------------------------------------------------------------------
