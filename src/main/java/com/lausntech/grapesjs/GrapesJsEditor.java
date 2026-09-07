@@ -430,16 +430,36 @@ public class GrapesJsEditor extends CustomField<String> implements HasSize, HasT
     }
 
     /**
-     * Inserts raw HTML into the canvas at the current selection: right after
-     * the currently selected component (as a new sibling), or as its child
-     * if it can't have siblings (e.g. it's the root wrapper). If nothing is
-     * currently selected, the HTML is appended at the end of the page.
+     * Asynchronously reads the HTML of the currently selected component
+     * (tag, attributes and content), or an empty string if nothing is
+     * currently selected. See {@link #getHtml()} for why this is
+     * asynchronous.
      * <p>
-     * Intended for an "Insert code" toolbar button: open a dialog, let the
-     * user paste an HTML snippet, and call this with the pasted text on
-     * confirm so it lands where they were last working in the canvas.
+     * Pairs with {@link #insertHtml(String)}: use this to pre-fill a
+     * "code editor" style dialog with what's about to be edited, then pass
+     * the (possibly modified) text back to {@link #insertHtml(String)} to
+     * apply it.
      *
-     * @param html the HTML snippet to insert
+     * @return a future resolving to the selected component's HTML, or ""
+     */
+    public CompletableFuture<String> getSelectedHtml() {
+        return callAndGetString("$connector.getSelectedHtml");
+    }
+
+    /**
+     * Applies HTML into the canvas like a source-code editor would: if a
+     * component is currently selected, that component is replaced entirely
+     * (tag, attributes and content) by the given HTML. If nothing is
+     * currently selected, the HTML is appended at the end of the page
+     * instead.
+     * <p>
+     * Intended for an "Insert code" toolbar button: pre-fill a dialog with
+     * {@link #getSelectedHtml()}, let the user edit or paste HTML, and call
+     * this with the result on confirm &mdash; the same action then works
+     * both for editing what was selected and for adding brand new markup
+     * when nothing was.
+     *
+     * @param html the HTML to apply
      */
     public void insertHtml(String html) {
         runBeforeClientResponse(ui -> getElement().callJsFunction("$connector.insertHtml", html == null ? "" : html));

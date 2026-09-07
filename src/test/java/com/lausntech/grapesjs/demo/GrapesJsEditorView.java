@@ -144,27 +144,44 @@ background: radial-gradient(circle at 8% 12%,rgba(25,198,194,.18),transparent 27
 	}
 
 	private void openInsertCodeDialog() {
+		UI ui = UI.getCurrent();
+		editor.getSelectedHtml().thenAccept(selectedHtml -> {
+			if (ui != null) {
+				ui.access(() -> showInsertCodeDialog(selectedHtml == null ? "" : selectedHtml));
+			}
+		});
+	}
+
+	/**
+	 * Shows the "code editor" dialog pre-filled with {@code initialHtml}
+	 * (the currently selected component's HTML, or "" if nothing is
+	 * selected). Applying always calls {@link GrapesJsEditor#insertHtml},
+	 * which itself decides whether that's an in-place edit of the selection
+	 * or a fresh insert - the dialog only needs to reflect that in its
+	 * labels.
+	 */
+	private void showInsertCodeDialog(String initialHtml) {
+		boolean editingSelection = !initialHtml.isBlank();
+
 		Dialog dialog = new Dialog();
-		dialog.setHeaderTitle("Insert code");
+		dialog.setHeaderTitle(editingSelection ? "Edit code" : "Insert code");
 		dialog.setWidth("600px");
 
 		TextArea codeArea = new TextArea();
 		codeArea.setPlaceholder("Paste HTML code here");
 		codeArea.setWidthFull();
 		codeArea.setHeight("300px");
+		codeArea.setValue(initialHtml);
 		dialog.add(codeArea);
 
-		Button insert = new Button("Insert", e -> {
-			String html = codeArea.getValue();
-			if (html != null && !html.isBlank()) {
-				editor.insertHtml(html);
-			}
+		Button apply = new Button(editingSelection ? "Apply" : "Insert", e -> {
+			editor.insertHtml(codeArea.getValue());
 			dialog.close();
 		});
-		insert.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+		apply.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
 		Button cancel = new Button("Cancel", e -> dialog.close());
 
-		dialog.getFooter().add(cancel, insert);
+		dialog.getFooter().add(cancel, apply);
 		dialog.open();
 	}
 

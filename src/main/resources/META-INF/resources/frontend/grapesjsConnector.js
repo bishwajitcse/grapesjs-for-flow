@@ -536,6 +536,24 @@ window.Vaadin.Flow.grapesjsConnector = {
         let readonlyTimeout;
         const readyQueue = [];
 
+        // GrapesJS deselects the current component as a side effect of any
+        // click outside the canvas iframe - including a click on our own
+        // Vaadin toolbar buttons, which live in the parent document, not
+        // inside GrapesJS's own UI tree. That means editor.getSelected() is
+        // already null by the time a toolbar button's server round-trip
+        // calls back into e.g. getSelectedHtml/insertHtml below. Track the
+        // last real selection independently instead, and use that - with a
+        // liveness check (still attached to the live canvas DOM) since the
+        // component may since have been removed/replaced.
+        let lastSelectedComponent = null;
+        const isComponentLive = (component) => {
+            if (!component || !component.getEl) {
+                return false;
+            }
+            const el = component.getEl();
+            return !!(el && el.isConnected);
+        };
+
         const runOrQueue = (fn) => {
             if (c.$connector.editor && c.$connector.ready) {
                 fn();
@@ -593,25 +611,49 @@ window.Vaadin.Flow.grapesjsConnector = {
                 });
             },
 
-            // Inserts raw HTML right after the currently selected component
-            // (or as its child, if it can't have siblings - e.g. it's the
-            // root wrapper), so pasted markup lands "where the cursor is"
-            // rather than always at a fixed spot. Falls back to appending at
-            // the end of the page when nothing is selected.
+            // Returns the last-selected component's own HTML (tag,
+            // attributes and content) with its GrapesJS-managed styling
+            // inlined as a style="..." attribute, or '' if nothing has been
+            // selected (or it was since removed) - used to pre-fill a "code
+            // editor" style dialog with what's about to be edited.
+            // Deliberately reads lastSelectedComponent rather than
+            // editor.getSelected(): by the time a toolbar button outside the
+            // canvas iframe calls this, GrapesJS has already cleared the
+            // live selection as a side effect of that outside click.
+            //
+            // Inlining matters here, not just for display: GrapesJS keeps
+            // style in a separate stylesheet keyed off each component's own
+            // generated id/class, so the plain HTML alone doesn't carry it -
+            // and insertHtml() below replaces the component outright (a new
+            // component, new generated id), which would silently drop any
+            // style that wasn't already inline. Baking it into the
+            // style="..." attribute here makes the round trip
+            // (getSelectedHtml -> edit -> insertHtml) style-preserving.
+            getSelectedHtml: function () {
+                if (!this.editor || !isComponentLive(lastSelectedComponent)) {
+                    return '';
+                }
+                const html = this.editor.getHtml({ component: lastSelectedComponent });
+                return inlineHtmlCss(html, this.editor.getCss() || '');
+            },
+
+            // Applies edited/pasted HTML like a source-code editor would:
+            // if a component was last selected (and is still live - see
+            // getSelectedHtml above), that component is REPLACED entirely
+            // (tag, attributes and content) by the given HTML - pairs with
+            // getSelectedHtml() above, so editing what it returned and
+            // calling this back applies the edit in place. Otherwise the
+            // HTML is appended at the end of the page instead, so the same
+            // action also works for adding brand new markup.
             insertHtml: function (html) {
                 runOrQueue(() => {
                     const expanded = expandStyleShorthand(html || '');
-                    const selected = this.editor.getSelected();
-                    const parent = selected && selected.parent();
-                    let inserted;
-                    if (selected && parent) {
-                        inserted = parent.append(expanded, { at: selected.index() + 1 });
-                    } else if (selected) {
-                        inserted = selected.append(expanded);
-                    } else {
-                        inserted = this.editor.getWrapper().append(expanded);
-                    }
-                    const last = inserted && inserted[inserted.length - 1];
+                    const target = isComponentLive(lastSelectedComponent) ? lastSelectedComponent : null;
+                    const result = target
+                        ? target.replaceWith(expanded)
+                        : this.editor.getWrapper().append(expanded);
+                    const list = Array.isArray(result) ? result : [result];
+                    const last = list[list.length - 1];
                     if (last) {
                         this.editor.select(last);
                     }
@@ -938,6 +980,7 @@ window.Vaadin.Flow.grapesjsConnector = {
         });
 
         editor.on('component:selected', (component) => {
+            lastSelectedComponent = component || null;
             refreshInlineStyleTextarea(component);
             const event = new Event('gjs-select');
             event.componentId = (component && component.getId && component.getId()) || '';
