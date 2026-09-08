@@ -1,6 +1,5 @@
 package com.lausntech.grapesjs;
 
-import java.io.Serializable;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -42,8 +41,11 @@ import com.vaadin.flow.shared.Registration;
  * different purposes and none of them should be reconstructed from another.
  * <p>
  * <b>Theming:</b> the component's own chrome ({@code grapesjs.css}) is
- * styled with Vaadin's Lumo theme design tokens ({@code --lumo-*}), which
- * are available by default in any Vaadin application.
+ * styled with Vaadin's Aura theme design tokens ({@code --aura-*}/
+ * {@code --vaadin-*}). Since Vaadin 25 no longer auto-selects a theme once
+ * an {@link com.vaadin.flow.component.page.AppShellConfigurator} is
+ * present, applications must load Aura explicitly, e.g. with
+ * {@code @StyleSheet(Aura.STYLESHEET)} on their app shell class.
  * <p>
  * <b>Security:</b> GrapesJS produces HTML/CSS that end users can freely
  * shape, including arbitrary attributes and (depending on configuration)
@@ -97,7 +99,7 @@ public class GrapesJsEditor extends CustomField<String> implements HasSize, HasT
         getElement().appendChild(editorContainer);
 
         changeListenerRegistration = getElement().addEventListener("gjs-change", event -> {
-            if (!event.getEventData().hasKey("event.htmlString")) {
+            if (!event.getEventData().has("event.htmlString")) {
                 return;
             }
             String htmlString = event.getEventData().get("event.htmlString").asString();
@@ -1028,7 +1030,7 @@ public class GrapesJsEditor extends CustomField<String> implements HasSize, HasT
     // Internal helpers
     // ------------------------------------------------------------------
 
-    private CompletableFuture<String> callAndGetString(String jsFunction, Serializable... params) {
+    private CompletableFuture<String> callAndGetString(String jsFunction, Object... params) {
         CompletableFuture<String> future = new CompletableFuture<>();
         runBeforeClientResponse(ui -> getElement().callJsFunction(jsFunction, params).then(String.class, result -> {
             future.complete(result);

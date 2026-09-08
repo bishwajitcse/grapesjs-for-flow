@@ -5,9 +5,11 @@ import java.util.List;
 import java.util.Map;
 
 import com.lausntech.grapesjs.GrapesJsEditor;
+import com.lausntech.grapesjs.GrapesJsEditorVariant;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.notification.Notification;
@@ -16,7 +18,6 @@ import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.router.Route;
-import com.vaadin.flow.theme.lumo.LumoIcon;
 
 /**
  * Demo/verification view exercising the GrapesJsEditor Java &lt;-&gt;
@@ -35,6 +36,7 @@ public class GrapesJsEditorView extends VerticalLayout {
 		setSpacing(false);
 
 		editor.setSizeFull();
+		editor.addThemeVariants(GrapesJsEditorVariant.DARK);
 
 		Map<String, List<String>> features = new HashMap<>();
 		features.put("Sections", List.of("hero", "about", "services", "feature-section", "pricing",
@@ -113,22 +115,22 @@ background: radial-gradient(circle at 8% 12%,rgba(25,198,194,.18),transparent 27
 				});
 			}
 		}));
-		save.setIcon(LumoIcon.DOWNLOAD.create());
-		save.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_SMALL);
+		save.setIcon(VaadinIcon.DOWNLOAD.create());
+		save.addThemeVariants(ButtonVariant.PRIMARY, ButtonVariant.SMALL);
 
 		Button undo = new Button("", e -> editor.undo());
-		undo.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_SMALL);
-		undo.setIcon(LumoIcon.UNDO.create());
+		undo.addThemeVariants(ButtonVariant.PRIMARY, ButtonVariant.SMALL);
+		undo.setIcon(VaadinIcon.ROTATE_LEFT.create());
 		Button redo = new Button("", e -> editor.redo());
-		redo.setIcon(LumoIcon.REDO.create());
-		redo.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_SMALL);
+		redo.setIcon(VaadinIcon.ROTATE_RIGHT.create());
+		redo.addThemeVariants(ButtonVariant.PRIMARY, ButtonVariant.SMALL);
 		Button preview = new Button("", e -> editor.runCommand("core:preview"));
-		preview.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_SMALL);
-		preview.setIcon(LumoIcon.EYE.create());
-		
+		preview.addThemeVariants(ButtonVariant.PRIMARY, ButtonVariant.SMALL);
+		preview.setIcon(VaadinIcon.EYE.create());
+
 		Button insertCode = new Button("", e -> openInsertCodeDialog());
-		insertCode.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_SMALL);
-		insertCode.setIcon(LumoIcon.UPLOAD.create());
+		insertCode.addThemeVariants(ButtonVariant.PRIMARY, ButtonVariant.SMALL);
+		insertCode.setIcon(VaadinIcon.UPLOAD.create());
 		insertCode.getElement().setAttribute("title", "Insert code");
 
 
@@ -137,8 +139,8 @@ background: radial-gradient(circle at 8% 12%,rgba(25,198,194,.18),transparent 27
 		spacer.getStyle().setFlexGrow("1");
 
 		Button close = new Button();
-		close.addThemeVariants(ButtonVariant.LUMO_ERROR, ButtonVariant.LUMO_SMALL);
-		close.setIcon(LumoIcon.CROSS.create());
+		close.addThemeVariants(ButtonVariant.ERROR, ButtonVariant.SMALL);
+		close.setIcon(VaadinIcon.CLOSE.create());
 		HorizontalLayout toolbar = new HorizontalLayout(undo, redo, preview, insertCode, spacer, save, close);
 		toolbar.setWidthFull();
 		toolbar.setPadding(true);
@@ -180,7 +182,7 @@ background: radial-gradient(circle at 8% 12%,rgba(25,198,194,.18),transparent 27
 			editor.insertHtml(codeArea.getValue());
 			dialog.close();
 		});
-		apply.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+		apply.addThemeVariants(ButtonVariant.PRIMARY);
 		Button cancel = new Button("Cancel", e -> dialog.close());
 
 		dialog.getFooter().add(cancel, apply);
