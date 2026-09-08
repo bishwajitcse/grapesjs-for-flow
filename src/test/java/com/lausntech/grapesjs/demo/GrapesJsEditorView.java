@@ -52,7 +52,9 @@ public class GrapesJsEditorView extends VerticalLayout {
 		editor.addBlocks(features);
 
 		editor.setValue(
-				"""
+				""" 
+				
+				<style>.test{color:#aef}</style>
 						           <section style="padding:88px 24px;
 background: radial-gradient(circle at 8% 12%,rgba(25,198,194,.18),transparent 27%),radial-gradient(circle at 94% 4%,rgba(55,108,251,.14),transparent 30%),linear-gradient(145deg,#f9fefe 0%,#edf8fa 53%,#e1f1f5 100%);text-align:center;">
 						  <div style="max-width:820px;margin:0 auto;">

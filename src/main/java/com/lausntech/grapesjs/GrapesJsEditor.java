@@ -353,6 +353,15 @@ public class GrapesJsEditor extends CustomField<String> implements HasSize, HasT
 
     /**
      * Sets the editor's HTML content. Equivalent to {@code setValue(html)}.
+     * <p>
+     * If {@code html} contains one or more top-level {@code <style>} tags
+     * (e.g. when loading an existing/legacy page that carries its custom CSS
+     * embedded in its markup), they are extracted and loaded into the
+     * page-level custom CSS instead of into the canvas: without this,
+     * GrapesJS's own HTML importer would otherwise silently strip them out
+     * of the component tree and merge their rules into its own managed
+     * stylesheet ({@link #getCss()}), losing any trace of them from the
+     * custom CSS exposed via {@link #getCustomCss()}.
      *
      * @param html the HTML to load into the canvas
      */
@@ -517,6 +526,10 @@ public class GrapesJsEditor extends CustomField<String> implements HasSize, HasT
      * restore a previously saved project, since the project JSON captures
      * GrapesJS-internal state (component tree, style rules, pages, symbols)
      * that plain HTML/CSS export does not.
+     * <p>
+     * Also restores the page-level custom CSS (see {@link #setCustomCss(String)})
+     * that was in effect when {@link #getProjectData()} was called, even
+     * though that CSS isn't itself part of GrapesJS's own project state.
      *
      * @param projectData a JSON string as returned by {@link #getProjectData()}
      */
@@ -530,6 +543,13 @@ public class GrapesJsEditor extends CustomField<String> implements HasSize, HasT
      * {@code editor.getProjectData()}) as a JSON string, suitable for
      * persisting to a database and later restoring with
      * {@link #loadProjectData(String)}.
+     * <p>
+     * The returned JSON also carries the current page-level custom CSS (see
+     * {@link #setCustomCss(String)}) as an extra field, purely so that
+     * saving/restoring a page through this Save/Load pair round-trips it too
+     * &mdash; even though it isn't otherwise part of GrapesJS's own project
+     * state. An application that already persists custom CSS itself via
+     * {@link #getCustomCss()}/{@link #setCustomCss(String)} can ignore this.
      *
      * @return a future resolving to the project data as a JSON string
      */

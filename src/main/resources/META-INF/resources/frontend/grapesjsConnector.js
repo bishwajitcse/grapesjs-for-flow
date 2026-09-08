@@ -153,6 +153,32 @@ function expandStyleShorthand(html) {
 }
 
 /**
+ * Pulls any top-level `<style>` tag(s) out of `html`, e.g. when loading an
+ * existing/legacy page that carries its custom CSS embedded in its markup
+ * rather than as a separate stylesheet. Without this, GrapesJS's own HTML
+ * importer silently strips `<style>` tags out of the component tree and
+ * merges their rules straight into its own managed stylesheet
+ * (`editor.getCss()`) - leaving no trace in the page-level Custom CSS panel,
+ * even though that's exactly the kind of hand-written CSS (media queries,
+ * ad-hoc classes) that panel is for.
+ *
+ * @returns {{html: string, css: string}} `html` with the `<style>` tag(s)
+ *   removed, and `css` the concatenation of their contents (empty string if
+ *   none were found).
+ */
+function extractStyleTags(html) {
+    const root = document.createElement('div');
+    root.innerHTML = html || '';
+    const styleEls = Array.from(root.querySelectorAll('style'));
+    if (!styleEls.length) {
+        return { html: html || '', css: '' };
+    }
+    const css = styleEls.map((el) => el.textContent).join('\n');
+    styleEls.forEach((el) => el.remove());
+    return { html: root.innerHTML, css: css };
+}
+
+/**
  * Converts a component style object (as returned by Component#getStyle) into
  * the newline-separated "prop: value;" text shown in the inline styles
  * textarea.
@@ -650,7 +676,15 @@ window.Vaadin.Flow.grapesjsConnector = {
             ready: false,
 
             setEditorContent: function (html) {
-                runOrQueue(() => this.editor.setComponents(expandStyleShorthand(html || '')));
+                runOrQueue(() => {
+                    const extracted = extractStyleTags(html || '');
+                    if (extracted.css.trim()) {
+                        customCss = extracted.css;
+                        customCssTextarea.value = customCss;
+                    }
+                    this.editor.setComponents(expandStyleShorthand(extracted.html));
+                    applyCustomCssToCanvas();
+                });
             },
 
             setCss: function (css) {
@@ -690,18 +724,38 @@ window.Vaadin.Flow.grapesjsConnector = {
                 return trimmedCustomCss ? '<style>' + customCss + '</style>' + inlined : inlined;
             },
 
+            // The custom CSS box is deliberately kept apart from GrapesJS's
+            // own internal state (see setCustomCss above), which means it
+            // does NOT ride along with editor.getProjectData()/
+            // loadProjectData() the way components and Style-Manager CSS
+            // do. Stash/restore it here as an extra top-level field on the
+            // same JSON, so an app that persists a page via this Save/Load
+            // pair (rather than the separate getCustomCss()/setCustomCss()
+            // calls) doesn't lose the page's custom CSS on reload.
             getProjectData: function () {
-                return this.editor ? JSON.stringify(this.editor.getProjectData()) : '{}';
+                if (!this.editor) {
+                    return '{}';
+                }
+                const data = this.editor.getProjectData();
+                data.customCss = customCss || '';
+                return JSON.stringify(data);
             },
 
             loadProjectData: function (json) {
                 runOrQueue(() => {
+                    let data;
                     try {
-                        this.editor.loadProjectData(JSON.parse(json));
+                        data = JSON.parse(json);
                     } catch (e) {
                         console.error('GrapesJS: failed to parse/load project data', e);
                         throw e;
                     }
+                    const restoredCustomCss = typeof data.customCss === 'string' ? data.customCss : '';
+                    delete data.customCss;
+                    this.editor.loadProjectData(data);
+                    customCss = restoredCustomCss;
+                    customCssTextarea.value = customCss;
+                    applyCustomCssToCanvas();
                 });
             },
 
@@ -1107,7 +1161,12 @@ window.Vaadin.Flow.grapesjsConnector = {
             }
 
             if (initialHtml) {
-                editor.setComponents(expandStyleShorthand(initialHtml));
+                const extracted = extractStyleTags(initialHtml);
+                if (extracted.css.trim()) {
+                    customCss = extracted.css;
+                    customCssTextarea.value = customCss;
+                }
+                editor.setComponents(expandStyleShorthand(extracted.html));
             }
             if (initialCss) {
                 editor.setStyle(initialCss);
