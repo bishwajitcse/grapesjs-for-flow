@@ -39,7 +39,7 @@ public class GrapesJsEditorView extends VerticalLayout {
 		Map<String, List<String>> features = new HashMap<>();
 		features.put("Sections", List.of("hero", "about", "services", "feature-section", "pricing",
 				"testimonials", "team", "stats", "blog-grid", "cta", "logos",
-				 "embed", "timeline", "faq", "section"));
+				 "embed", "custom-html", "timeline", "faq", "section"));
 		
 		features.put("Layout", List.of("two-columns", "three-columns", "four-columns", "container"));
 		

@@ -267,6 +267,87 @@ function openEmbedPrompt(editor, model) {
     setTimeout(() => textarea.focus(), 0);
 }
 
+const CUSTOM_HTML_PLACEHOLDER_HTML = '<div data-gjs-type="custom-html-placeholder" '
+    + 'style="padding:24px;text-align:center;border:1px dashed #94a3b8;border-radius:8px;'
+    + 'font:400 13px Arial,sans-serif;color:#64748b;background:#f8fafc">'
+    + 'Double-click to edit custom HTML</div>';
+
+/**
+ * Registers the `custom-html` component type: a free-form HTML block whose
+ * markup is authored directly by the user (as opposed to `embed`, which is
+ * meant for pasting third-party embed snippets). Structurally identical to
+ * the `embed` component above - the block drops a placeholder, double-click
+ * opens a code prompt, and the entered markup is parsed into real child
+ * components via `model.components()` so it renders/exports exactly as
+ * written.
+ */
+function registerCustomHtmlComponent(editor) {
+    editor.Components.addType('custom-html-placeholder', {
+        isComponent: (el) => !!(el.getAttribute && el.getAttribute('data-gjs-type') === 'custom-html-placeholder'),
+        model: {
+            defaults: {
+                draggable: false,
+                droppable: false,
+                selectable: false,
+                hoverable: false,
+                editable: false,
+                removable: false,
+                copyable: false,
+                attributes: { 'data-gjs-type': 'custom-html-placeholder' },
+            },
+        },
+    });
+
+    editor.Components.addType('custom-html', {
+        isComponent: (el) => !!(el.getAttribute && el.getAttribute('data-gjs-type') === 'custom-html'),
+        model: {
+            defaults: {
+                draggable: true,
+                droppable: false,
+                editable: false,
+                attributes: { 'data-gjs-type': 'custom-html' },
+            },
+        },
+        view: {
+            events: { dblclick: 'onDblClick' },
+            onDblClick() {
+                openCustomHtmlPrompt(editor, this.model);
+            },
+        },
+    });
+}
+
+function isCustomHtmlPlaceholder(model) {
+    const children = model.components();
+    return children.length === 1 && children.at(0).get('type') === 'custom-html-placeholder';
+}
+
+function openCustomHtmlPrompt(editor, model) {
+    const currentCode = isCustomHtmlPlaceholder(model)
+        ? ''
+        : model.components().map((child) => editor.getHtml({ component: child })).join('\n');
+
+    const wrapper = document.createElement('div');
+    wrapper.className = 'gjs-vaadin-embed-modal';
+    wrapper.innerHTML = `
+        <textarea style="width:100%;height:400px" class="gjs-vaadin-embed-textarea" placeholder="Write custom HTML here" spellcheck="false"></textarea>
+        <div class="gjs-vaadin-embed-modal-actions">
+            <button type="button" class="gjs-vaadin-embed-apply">Apply</button>
+        </div>
+    `;
+    const textarea = wrapper.querySelector('.gjs-vaadin-embed-textarea');
+    textarea.value = currentCode;
+
+    wrapper.querySelector('.gjs-vaadin-embed-apply').addEventListener('click', () => {
+        const code = textarea.value.trim();
+        model.components(code || CUSTOM_HTML_PLACEHOLDER_HTML);
+        editor.Modal.close();
+    });
+
+    editor.Modal.open({ title: 'Custom HTML', content: wrapper });
+    setTimeout(() => textarea.focus(), 0);
+}
+
 const SVG_NS = 'http://www.w3.org/2000/svg';
 
 // Tags with a dedicated component type below - excluded from the
@@ -504,8 +585,9 @@ window.Vaadin.Flow.grapesjsConnector = {
      * @param initialHtml initial HTML content
      * @param initialCss initial CSS content
      * @param enabled whether the canvas should start out editable
+     * @param initialCustomCss initial custom (page-level) CSS content
      */
-    initLazy: function (customConfig, c, ta, options, initialHtml, initialCss, enabled) {
+    initLazy: function (customConfig, c, ta, options, initialHtml, initialCss, enabled, initialCustomCss) {
 
         const beforeUnloadHandler = () => {
             if (c.$connector && c.$connector.editor) {
@@ -534,6 +616,7 @@ window.Vaadin.Flow.grapesjsConnector = {
 
         let changeMode = 'change';
         let readonlyTimeout;
+        let customCss = initialCustomCss || '';
         const readyQueue = [];
 
         // GrapesJS deselects the current component as a side effect of any
@@ -582,11 +665,29 @@ window.Vaadin.Flow.grapesjsConnector = {
                 return this.editor ? (this.editor.getCss() || '') : '';
             },
 
+            // Page-level custom CSS - hand-written by the end user (e.g.
+            // @media queries or classes not modeled by the Style Manager
+            // sectors), kept apart from GrapesJS's own component-generated
+            // CSS. See applyCustomCssToCanvas() for how it's live-previewed.
+            setCustomCss: function (css) {
+                runOrQueue(() => {
+                    customCss = css || '';
+                    customCssTextarea.value = customCss;
+                    applyCustomCssToCanvas();
+                });
+            },
+
+            getCustomCss: function () {
+                return customCss || '';
+            },
+
             getFullHtml: function () {
                 if (!this.editor) {
                     return '';
                 }
-                return inlineHtmlCss(this.editor.getHtml(), this.editor.getCss() || '');
+                const inlined = inlineHtmlCss(this.editor.getHtml(), this.editor.getCss() || '');
+                const trimmedCustomCss = (customCss || '').trim();
+                return trimmedCustomCss ? '<style>' + customCss + '</style>' + inlined : inlined;
             },
 
             getProjectData: function () {
@@ -608,6 +709,9 @@ window.Vaadin.Flow.grapesjsConnector = {
                 runOrQueue(() => {
                     this.editor.setComponents('');
                     this.editor.setStyle('');
+                    customCss = '';
+                    customCssTextarea.value = '';
+                    applyCustomCssToCanvas();
                 });
             },
 
@@ -832,6 +936,10 @@ window.Vaadin.Flow.grapesjsConnector = {
                         <div class="gjs-vaadin-inline-style-label">Inline styles</div>
                         <textarea class="gjs-vaadin-inline-style-textarea" placeholder="property: value;" spellcheck="false" disabled></textarea>
                     </div>
+                    <div class="gjs-vaadin-custom-css">
+                        <div class="gjs-vaadin-custom-css-label">Custom CSS</div>
+                        <textarea class="gjs-vaadin-custom-css-textarea" placeholder="@media (max-width: 480px) { ... }" spellcheck="false"></textarea>
+                    </div>
                     <div class="gjs-vaadin-traits"></div>
                 </div>
             </div>
@@ -844,6 +952,7 @@ window.Vaadin.Flow.grapesjsConnector = {
         const selectorsEl = root.querySelector('.gjs-vaadin-selectors');
         const stylesEl = root.querySelector('.gjs-vaadin-styles');
         const inlineStyleTextarea = root.querySelector('.gjs-vaadin-inline-style-textarea');
+        const customCssTextarea = root.querySelector('.gjs-vaadin-custom-css-textarea');
         const traitsEl = root.querySelector('.gjs-vaadin-traits');
         const actionsEl = root.querySelector('.gjs-vaadin-topbar-actions');
         const devicesEl = root.querySelector('.gjs-vaadin-topbar-devices');
@@ -884,7 +993,50 @@ window.Vaadin.Flow.grapesjsConnector = {
         c.$connector.editor = editor;
 
         registerEmbedComponent(editor);
+        registerCustomHtmlComponent(editor);
         registerSvgComponents(editor);
+
+        // Page-level custom CSS, hand-written by the end user rather than
+        // generated by the Style Manager - e.g. @media queries or rules
+        // targeting classes/selectors that aren't tied to a single
+        // component. Applied directly into the canvas iframe (so @media
+        // breakpoints preview live against the current device width) via a
+        // dedicated <style> tag kept apart from GrapesJS's own generated
+        // stylesheet, and prepended verbatim to getFullHtml()'s output.
+        customCssTextarea.value = customCss;
+
+        function applyCustomCssToCanvas() {
+            const doc = editor.Canvas.getDocument();
+            if (!doc || !doc.body) {
+                return;
+            }
+            let styleEl = doc.getElementById('gjs-vaadin-custom-css');
+            if (!styleEl) {
+                styleEl = doc.createElement('style');
+                styleEl.id = 'gjs-vaadin-custom-css';
+            }
+            styleEl.textContent = customCss;
+            // GrapesJS keeps its own generated component CSS in a <style>
+            // tag it pins as the first child of <body> (not <head>), so a
+            // tag placed in <head> would always sit earlier in source order
+            // and lose every equal-specificity cascade tie against it,
+            // making custom CSS edits look like they don't take effect.
+            // appendChild() on an already-attached node moves it, so this
+            // both inserts it initially and re-pins it as the LAST node in
+            // the document on every update, guaranteeing it cascades after
+            // GrapesJS's own stylesheet.
+            doc.body.appendChild(styleEl);
+        }
+
+        // Applied on every keystroke, not debounced: setting a <style>
+        // tag's textContent is cheap (the browser only needs to
+        // re-parse/re-match that one stylesheet), so there's no need to lag
+        // behind typing the way the pricier component.setStyle() calls
+        // below do.
+        customCssTextarea.addEventListener('input', () => {
+            customCss = customCssTextarea.value;
+            applyCustomCssToCanvas();
+        });
 
         // Raw inline-styles textarea: always mirrors the selected
         // component's full style object (all properties, including those
@@ -960,6 +1112,7 @@ window.Vaadin.Flow.grapesjsConnector = {
             if (initialCss) {
                 editor.setStyle(initialCss);
             }
+            applyCustomCssToCanvas();
             if (enabled === false) {
                 editor.runCommand('core:preview');
                 ta.classList.add('gjs-vaadin-readonly');

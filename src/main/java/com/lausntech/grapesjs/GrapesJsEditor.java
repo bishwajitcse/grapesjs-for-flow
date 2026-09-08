@@ -33,9 +33,10 @@ import com.vaadin.flow.shared.Registration;
  * The component extends {@link CustomField} of {@link String}; the field
  * value represents the editor's <strong>HTML</strong> content, which makes
  * the component directly usable with {@link com.vaadin.flow.data.binder.Binder}.
- * CSS and the full GrapesJS project (components + styles + pages, suitable
- * for re-loading into the editor later) are exposed through the separate,
- * asynchronous {@link #getCss()}, {@link #getProjectData()} and
+ * CSS, page-level custom CSS and the full GrapesJS project (components +
+ * styles + pages, suitable for re-loading into the editor later) are exposed
+ * through the separate, asynchronous {@link #getCss()},
+ * {@link #getCustomCss()}, {@link #getProjectData()} and
  * {@link #loadProjectData(String)} APIs &mdash; they are deliberately kept
  * apart from the field value, since HTML, CSS and project JSON serve
  * different purposes and none of them should be reconstructed from another.
@@ -70,6 +71,7 @@ public class GrapesJsEditor extends CustomField<String> implements HasSize, HasT
 
     private String currentValue = "";
     private String currentCss = "";
+    private String currentCustomCss = "";
     private String rawConfig;
     private final LinkedHashMap<String, Object> config = new LinkedHashMap<>();
 
@@ -194,8 +196,8 @@ public class GrapesJsEditor extends CustomField<String> implements HasSize, HasT
             ui.getPage().executeJs(
                     "const rawconfig = " + rawConfigJs + ";\n"
                             + "const options = " + optionsJs + ";\n"
-                            + "window.Vaadin.Flow.grapesjsConnector.initLazy(rawconfig, $0, $1, options, $2, $3, $4)",
-                    getElement(), editorContainer, currentValue, currentCss, (enabled && !readOnly))
+                            + "window.Vaadin.Flow.grapesjsConnector.initLazy(rawconfig, $0, $1, options, $2, $3, $4, $5)",
+                    getElement(), editorContainer, currentValue, currentCss, (enabled && !readOnly), currentCustomCss)
                     .then(ignore -> initialContentSent = true);
             connectorInitialized = true;
         });
@@ -398,6 +400,40 @@ public class GrapesJsEditor extends CustomField<String> implements HasSize, HasT
     }
 
     /**
+     * Sets page-level custom CSS: free-form, hand-written CSS (e.g.
+     * {@code @media} queries, or rules targeting classes/selectors that
+     * aren't tied to a single component) that the end user can also edit
+     * directly via the editor's own "Custom CSS" panel. Kept apart from
+     * {@link #setCss(String)}, which holds GrapesJS's own component-generated
+     * stylesheet.
+     * <p>
+     * Applied live in the canvas (so {@code @media} breakpoints preview
+     * correctly against the current device width), and prepended verbatim,
+     * wrapped in a {@code <style>} tag, ahead of everything else in
+     * {@link #getFullHtml()}'s output.
+     *
+     * @param customCss the custom CSS to load
+     */
+    public void setCustomCss(String customCss) {
+        this.currentCustomCss = customCss == null ? "" : customCss;
+        if (initialContentSent) {
+            runBeforeClientResponse(ui -> getElement().callJsFunction("$connector.setCustomCss", currentCustomCss));
+        }
+    }
+
+    /**
+     * Asynchronously reads the page-level custom CSS currently in the
+     * editor's "Custom CSS" panel, as previously set via
+     * {@link #setCustomCss(String)} or edited directly by the end user. See
+     * {@link #getHtml()} for why this is asynchronous.
+     *
+     * @return a future resolving to the current custom CSS
+     */
+    public CompletableFuture<String> getCustomCss() {
+        return callAndGetString("$connector.getCustomCss");
+    }
+
+    /**
      * Asynchronously reads the editor's HTML with all applicable CSS
      * inlined directly onto elements as {@code style} attributes &mdash;
      * the standard "CSS inlining" technique for portable HTML that has to
@@ -414,6 +450,11 @@ public class GrapesJsEditor extends CustomField<String> implements HasSize, HasT
      * {@code <style>} block prepended to the result instead. The base look
      * of the content is unaffected if that block gets stripped by the
      * destination &mdash; only those extra states/behaviors are lost.
+     * <p>
+     * Any page-level custom CSS set via {@link #setCustomCss(String)} (or
+     * entered by the end user in the editor's own "Custom CSS" panel) is
+     * prepended verbatim, wrapped in its own {@code <style>} tag, ahead of
+     * that residual-rules block &mdash; i.e. at the very top of the result.
      * <p>
      * Unlike a full CSS engine, rules are applied in source order rather
      * than by CSS specificity. GrapesJS's own generated CSS is normally
@@ -497,12 +538,13 @@ public class GrapesJsEditor extends CustomField<String> implements HasSize, HasT
     }
 
     /**
-     * Clears all content (components and styles) from the canvas.
+     * Clears all content (components, styles and custom CSS) from the canvas.
      */
     public void clear() {
         runBeforeClientResponse(ui -> getElement().callJsFunction("$connector.clear"));
         currentValue = "";
         currentCss = "";
+        currentCustomCss = "";
     }
 
     // ------------------------------------------------------------------

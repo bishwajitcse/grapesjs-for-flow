@@ -453,6 +453,14 @@ public final class GrapesJsBlockPresets {
                 </div>
                 """);
 
+        register("custom-html", "Custom HTML block", """
+                <div data-gjs-type="custom-html">
+                    <div data-gjs-type="custom-html-placeholder" style="padding:24px;text-align:center;border:1px dashed #94a3b8;border-radius:8px;font:400 13px Arial,sans-serif;color:#64748b;background:#f8fafc">
+                        Double-click to edit custom HTML
+                    </div>
+                </div>
+                """);
+
         register("video-section", "Video Section", """
                 <section style="padding:64px 24px;text-align:center">
                     <h2 style="margin:0 0 8px;font:700 32px Arial,sans-serif;color:#0f172a">See it in action</h2>

@@ -36,7 +36,7 @@ public class EditorDemoView extends VerticalLayout {
         Map<String, List<String>> features = new HashMap<>();
         features.put("Sections", List.of("navbar", "hero", "about", "services", "feature-section", "pricing",
                 "testimonials", "team", "stats", "gallery", "blog-grid", "cta", "newsletter", "contact", "logos",
-                "video-section", "embed", "timeline", "faq", "section", "footer"));
+                "video-section", "embed", "custom-html", "timeline", "faq", "section", "footer"));
         features.put("Layout", List.of("two-columns", "three-columns", "four-columns", "container"));
         features.put("Components", List.of("card", "pricing-card", "testimonial-card", "icon-box", "button", "link",
                 "image-text", "badge", "avatar", "progress-bar", "rating", "social-icons", "alert", "quote", "tabs",
