@@ -1023,10 +1023,12 @@ window.Vaadin.Flow.grapesjsConnector = {
             styleManager: {
                 appendTo: stylesEl,
                 sectors: [
+                    { name: 'General', open: false, buildProps: ['display', 'position', 'top', 'right', 'left', 'bottom'] },
+                    { name: 'Flex', open: false, buildProps: ['flex-direction', 'flex-wrap', 'justify-content', 'align-items', 'align-content', 'order', 'flex-basis', 'flex-grow', 'flex-shrink', 'align-self'] },
                     { name: 'Dimension', open: false, buildProps: ['width', 'min-height', 'padding', 'margin'] },
                     { name: 'Typography', open: false, buildProps: ['font-family', 'font-size', 'font-weight', 'letter-spacing', 'color', 'line-height', 'text-align'] },
                     { name: 'Decorations', open: false, buildProps: ['background-color', 'border-radius', 'border', 'box-shadow'] },
-                    { name: 'Extra', open: false, buildProps: ['opacity', 'transition', 'display', 'position'] },
+                    { name: 'Extra', open: false, buildProps: ['opacity', 'transition'] },
                 ],
             },
             traitManager: { appendTo: traitsEl },

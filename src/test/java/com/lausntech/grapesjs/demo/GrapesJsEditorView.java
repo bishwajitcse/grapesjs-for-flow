@@ -36,7 +36,7 @@ public class GrapesJsEditorView extends VerticalLayout {
 		setSpacing(false);
 
 		editor.setSizeFull();
-		editor.addThemeVariants(GrapesJsEditorVariant.DARK);
+		//editor.addThemeVariants(GrapesJsEditorVariant.DARK);
 
 		Map<String, List<String>> features = new HashMap<>();
 		features.put("Sections", List.of("hero", "about", "services", "feature-section", "pricing",

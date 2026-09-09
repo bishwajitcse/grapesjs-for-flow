@@ -129,11 +129,11 @@ public final class GrapesJsBlockPresets {
                             <summary style="display:flex;justify-content:space-between;align-items:center;cursor:pointer;font:700 16px Arial,sans-serif;color:#0f172a">Question one goes here?<span style="color:#2563eb" aria-hidden="true">+</span></summary>
                             <p style="margin:12px 0 0;font:400 15px/1.7 Arial,sans-serif;color:#64748b">Answer to the first question goes here.</p>
                         </details>
-                        <details style="padding:22px 0;border-bottom:1px solid #e2e8f0">
+                        <details open style="padding:22px 0;border-bottom:1px solid #e2e8f0">
                             <summary style="display:flex;justify-content:space-between;align-items:center;cursor:pointer;font:700 16px Arial,sans-serif;color:#0f172a">Question two goes here?<span style="color:#2563eb" aria-hidden="true">+</span></summary>
                             <p style="margin:12px 0 0;font:400 15px/1.7 Arial,sans-serif;color:#64748b">Answer to the second question goes here.</p>
                         </details>
-                        <details style="padding:22px 0;border-bottom:1px solid #e2e8f0">
+                        <details open style="padding:22px 0;border-bottom:1px solid #e2e8f0">
                             <summary style="display:flex;justify-content:space-between;align-items:center;cursor:pointer;font:700 16px Arial,sans-serif;color:#0f172a">Question three goes here?<span style="color:#2563eb" aria-hidden="true">+</span></summary>
                             <p style="margin:12px 0 0;font:400 15px/1.7 Arial,sans-serif;color:#64748b">Answer to the third question goes here.</p>
                         </details>
@@ -598,7 +598,7 @@ public final class GrapesJsBlockPresets {
                 """);
 
         register("accordion", "Accordion Item", """
-                <details style="padding:18px 0;border-bottom:1px solid #e2e8f0">
+                <details open style="padding:18px 0;border-bottom:1px solid #e2e8f0">
                     <summary style="display:flex;justify-content:space-between;align-items:center;cursor:pointer;font:700 15px Arial,sans-serif;color:#0f172a">Accordion item title<span style="color:#2563eb" aria-hidden="true">+</span></summary>
                     <p style="margin:12px 0 0;font:400 14px/1.6 Arial,sans-serif;color:#64748b">Content revealed when this item is expanded.</p>
                 </details>
